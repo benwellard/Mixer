@@ -24,8 +24,8 @@ void Interface::MixerMapClear() {
     Controller::changeVolume(41,0);
 
     //maps the mixer to outputs 1 and 2
-    Controller::mapChannelToMix(0, 26);
-    Controller::mapChannelToMix(1, 27);
+    //Controller::mapChannelToMix(0, 26);
+    //Controller::mapChannelToMix(1, 27);
     //Controller::mapChannelToMix(2, 28);
     //Controller::mapChannelToMix(3, 29);
 
@@ -38,7 +38,7 @@ unsigned short* Interface::getLevels()
 
 void Interface::ChangeVolume(int channel, int volume)
 {
-    channel = channel - 2;
+    //channel = channel - 2;
     int mixerID = 0;
     if (channel % 2 == 0){
         mixerID = 0;
@@ -62,10 +62,7 @@ int Interface::AbstoID(int absChannel)
 }
 
 
-int Interface::CreateMix(int noChannels)
-{
 
-}
 int x = 0;
 void Interface::addChannel(int channel)
 {
@@ -77,6 +74,9 @@ void Interface::addChannel(int channel)
 }
 void Interface::setOutputChannel(int channel)
 {
+    for(int i = 0;i < 8;i++)
+        Controller::mapChannelToMix(i, i);
+    channel = channel * 2;
     Controller::mapChannelToMix(channel, 26);
     Controller::mapChannelToMix(channel + 1, 27);
 }

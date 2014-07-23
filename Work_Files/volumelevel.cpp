@@ -47,10 +47,6 @@ void VolumeLevel::paintEvent(QPaintEvent *event)
 void VolumeLevel::setInputLevels(unsigned short * hxArray)
 {
     hArray = hxArray;
-    for (int i = 0; i < sizeof(hArray);i++) {
-    std::cout << hArray[i] << "  ";
-    }
-    std::cout << std::endl;
     update();
 }
 

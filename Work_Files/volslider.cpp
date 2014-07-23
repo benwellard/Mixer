@@ -8,3 +8,8 @@ VolSlider::VolSlider(int indexNo, int channelSelected, QWidget *parent) :
     index = indexNo;
     channel = channelSelected;
 }
+
+void VolSlider::releaseIndex(int volume)
+{
+    emit emitIndex(index, volume);
+}

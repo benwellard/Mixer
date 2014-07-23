@@ -23,8 +23,6 @@ unsigned short* Controller::getLevels()
     int x = usb_mixer_connect();
     int y = usb_mixer_mem_get(0,0,levels);
     levelData = (unsigned short*)levels;
-    for(int i = 0;i < sizeof(levelData);i++)
-        std::cout << levelData[i];
     x = usb_mixer_disconnect();
     mutex.unlock();
     return levelData;
@@ -44,7 +42,7 @@ int Controller::getMixerMap(int mixerChannel)
     mutex.lock();
     int x = usb_mixer_connect();
     return usb_mixsel_get_state(0, mixerChannel);
-
+    mutex.unlock();
 }
 
 void Controller::mapMixInput(int input, int mixerChannel, int channel)
@@ -58,10 +56,11 @@ void Controller::mapMixInput(int input, int mixerChannel, int channel)
 
 void Controller::changeVolume(int node, int volume)
 {
-
+    mutex.lock();
     int x = usb_mixer_connect();
     x = usb_mixer_set_value(0, node, volume);
     x = usb_mixer_disconnect();
+    mutex.unlock();
 }
 
 int Controller::getMap(int channel)

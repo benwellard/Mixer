@@ -11,9 +11,9 @@ public:
     int index;
     int channel;
 signals:
-
+    void emitIndex(int index, int volume);
 public slots:
-
+    void releaseIndex(int volume);
 };
 
 #endif // VOLSLIDER_H
