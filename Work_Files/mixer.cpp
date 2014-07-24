@@ -12,16 +12,19 @@
 #include <interface.h>
 #include <QThread>
 #include <iostream>
+#include <usb_mixer.h>
+#include <controller.h>
 
 int noOfChannelsMixer = 0;
-QHBoxLayout *sliderLayout = new QHBoxLayout();
+
 
 
 Mixer::Mixer() : QWidget()
 {
+    indexNo = 0;
+    initVolumesArray();
     Interface::MixerMapClear();
     constructMixer();
-    //noOfChannelsMixer = 0;
     QWidget *volumes = new QWidget();
 }
 
@@ -30,12 +33,10 @@ void Mixer::setChannels(int n)
     emit emitChannels(noOfChannelsMixer);
 }
 
-
 void Mixer::setChannel(int channel)
 {
     selectedChannel = channel + 1;
 }
-
 
 void Mixer::addChannel()
 {
@@ -43,10 +44,9 @@ void Mixer::addChannel()
     noOfChannelsMixer++;
     setChannels(noOfChannelsMixer);
 }
-int indexNo = 0;
+
 void Mixer::newSlider()
 {
-
     //Slider
     if(sliderLayout->count() > 0) {
     int indexNo = (sliderLayout->count()/2);
@@ -93,7 +93,6 @@ QComboBox* Mixer::addOutputBox()
     return outputSelect;
 }
 
-
 void Mixer::constructMixer() {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     this->setLayout(mainLayout);
@@ -107,32 +106,59 @@ void Mixer::constructMixer() {
     outputLabel->move(1200,675);
     outputSelect->move(1200,700);
     newChannel->setText("Add Channel");
-    newChannel->setMinimumSize(100,70);
+    newChannel->setMinimumSize(110,70);
     newChannel->setMaximumSize(200,100);
     channelSelect->setMinimumSize(100,50);
     channelSelect->setMaximumSize(200,100);
     mainLayout->setAlignment(Qt::AlignCenter);
     mainLayout->addSpacing(200);
+    sliderLayout = new QHBoxLayout;
     mainLayout->addLayout(sliderLayout);
     selectedChannel = 1;
-    connect(newChannel,SIGNAL(released()),this,SLOT(addChannel()));
+
     connect(newChannel,SIGNAL(released()),this,SLOT(newSlider()));
     connect(channelSelect,SIGNAL(activated(int)),this,SLOT(setChannel(int)));
     Interface *interface = new Interface();
     QThread *thread = new QThread(this);
     interface->moveToThread(thread);
     connect(this,SIGNAL(emitVolume(int,int)),interface,SLOT(ChangeVolume(int,int)));
+    connect(newChannel,SIGNAL(released()),this,SLOT(addChannel()));
     connect(outputSelect,SIGNAL(activated(int)),interface,SLOT(setOutputChannel(int)));
     thread->start();
 }
 
-
 void Mixer::changeVolume(int indexVal, int vol)
 {
-
     emit emitVolume(indexVal, vol);
-
 }
+
+void Mixer::saveVolumesArray()
+{
+    for(int i = 0;i < 47;i++)
+        volArray[i] = Controller::getValue(i+80);
+    int c = 0;
+    c = c;
+}
+
+void Mixer::loadVolumesArray()
+{
+    for(int i = 0;i < 47;i++)
+    {
+        Controller::changeVolume(i+80, volArray[i]);
+        std::cout << i+80 << ": " << volArray[i] << "   ";
+    }
+}
+
+void Mixer::initVolumesArray()
+{
+    for(int i = 0;i < 47;i++)
+        volArray.insert(i, -127);
+}
+
+
+
+
+
 
 
 

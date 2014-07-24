@@ -19,6 +19,9 @@ public:
 public slots:
     void ChangeVolume(int channel, int volume);
     void setOutputChannel(int channel);
+
+private:
+    //static int outputChannel;
 };
 
 #endif // INTERFACE_H

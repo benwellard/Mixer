@@ -11,5 +11,5 @@ VolSlider::VolSlider(int indexNo, int channelSelected, QWidget *parent) :
 
 void VolSlider::releaseIndex(int volume)
 {
-    emit emitIndex(index, volume);
+    emit emitIndex(channel, volume);
 }

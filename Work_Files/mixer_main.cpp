@@ -11,7 +11,7 @@
 
 mixer_main::mixer_main() :QWidget()
 {
-    noOfChannels = 0;
+    Controller::initController();
     this->constructWindow();
 
     //Commands to map an input channel to a mixer
@@ -24,15 +24,8 @@ mixer_main::mixer_main() :QWidget()
 
 mixer_main::~mixer_main()
 {
+    Controller::deinitController();
 
-
-}
-
-
-void mixer_main::noChannelsSlot(int noChannels)
-{
-    noOfChannels = noChannels;
-    constructWindow();
 }
 
 void mixer_main::constructWindow()
@@ -41,19 +34,39 @@ void mixer_main::constructWindow()
     this->setMinimumSize(1400,800);
     QTabWidget *tabs = new QTabWidget(this);
     tabs->setMinimumSize(1400,800);
-    Mixer *mix1 = new Mixer();
-    VolumeLevel *volumeMix1 = new VolumeLevel(mix1);
-    connect(mix1,SIGNAL(emitChannels(int)),this,SLOT(noChannelsSlot(int)));
-    connect(mix1,SIGNAL(emitChannels(int)),volumeMix1,SLOT(setChannels(int)));
-
-    volumeMix1->setMinimumSize(1400,300);
-
+    mix1 = new Mixer();
+    mix2 = new Mixer();
+    //VolumeLevel *volumeMix1 = new VolumeLevel(mix1);
+    //VolumeLevel *volumeMix2 = new VolumeLevel(mix2);
+    //connect(mix1,SIGNAL(emitChannels(int)),volumeMix1,SLOT(setChannels(int)));
+    //connect(mix2,SIGNAL(emitChannels(int)),volumeMix2,SLOT(setChannels(int)));
+    //volumeMix1->setMinimumSize(1400,300);
+    //volumeMix2->setMinimumSize(1400,300);
+    connect(tabs,SIGNAL(currentChanged(int)),this,SLOT(saveAndLoadArray(int)));
 
     tabs->addTab(mix1, "Mix 1");
+    tabs->addTab(mix2, "Mix 2");
 
 
 
 }
+
+void mixer_main::saveAndLoadArray(int tab)
+{
+    if(tab == 0)
+    {
+        std::cout << "tab 1";
+        mix2->saveVolumesArray();
+        mix1->loadVolumesArray();
+    }
+    else if(tab == 1)
+    {
+        std::cout << "tab 2";
+        mix1->saveVolumesArray();
+        mix2->loadVolumesArray();
+    }
+}
+
 
 
 

@@ -500,7 +500,7 @@ int main2 (int argc, char **argv) {
       value = atof(argv[4]);
 
     usb_mixer_set_value(mixer_index, mixer_unit, value);
-  } else if (strcmp(argv[1], "--get-value") == 0) {
+  } else if (strcmp(argv[1], "--") == 0) {
     unsigned int mixer_unit = 0;
     double result = 0;
     if (argc < 4) {

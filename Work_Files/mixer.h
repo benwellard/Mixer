@@ -6,6 +6,7 @@
 #include <QComboBox>
 #include <volslider.h>
 #include <QList>
+#include <interface.h>
 
 class Mixer : public QWidget
 {
@@ -24,16 +25,20 @@ public slots:
     void addChannel();
     void setChannel(int channel);
     void newSlider();
-
+    void saveVolumesArray();
+    void loadVolumesArray();
 private:
     QList<VolSlider *> sliders;
     int selectedChannel;
+    int indexNo;
+    QHBoxLayout *sliderLayout;
     QVBoxLayout *mainLayout;
     QWidget *channels;
     QWidget *volumes;
-
     QComboBox *addChannelBox();
     QComboBox *addOutputBox();
+    void initVolumesArray();
+    QList<int> volArray;
 };
 
 #endif // MIXER_H

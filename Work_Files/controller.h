@@ -15,6 +15,9 @@ public:
     static void changeVolume(int node, int volume);
     static int getMap(int channel);
     static int getMixerMap(int mixerChannel);
+    static int getValue(int node);
+    static void initController();
+    static void deinitController();
 private:
     static QMutex mutex;
 
