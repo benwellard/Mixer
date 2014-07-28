@@ -14,7 +14,7 @@ void VolumeLevelInterMixer::getLevels()
 {
 
     //while(true) {
-    unsigned short *levelDataX = Interface::getLevels();
+    unsigned short *levelDataX = interface->getLevels();
     emit emitLevels(levelDataX);
     //}
 

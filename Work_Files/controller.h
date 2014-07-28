@@ -18,6 +18,7 @@ public:
     static int getValue(int node);
     static void initController();
     static void deinitController();
+    static int getChannelToMix(int channel);
 private:
     static QMutex mutex;
 

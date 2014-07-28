@@ -29,7 +29,8 @@ private:
     int noOfChannels;
     Mixer *mix1;
     Mixer *mix2;
-
+    Mixer *mix3;
+    Mixer *mix4;
 };
 
 #endif // MIXER_MAIN_H

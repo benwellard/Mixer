@@ -7,21 +7,23 @@ class Interface : public QObject
 {
     Q_OBJECT
 public:
-    Interface();
-    static void MixerMapClear();
-    static int IDtoAbs(int mixerID);
-    static void addChannel(int channel);
-    static int AbstoID(int absChannel);
-
-    static unsigned short* getLevels();
-
-
+    Interface(int outputchannel, int mixChannel);
+    void MixerMapClear();
+    int IDtoAbs(int mixerID);
+    void addChannel(int channel);
+    int AbstoID(int absChannel);
+    int getValue(int channel);
+    unsigned short* getLevels();
+    int outputChannel;
+    int mixerChannel;
+    int prevChannel;
+    int prevChannel2;
 public slots:
     void ChangeVolume(int channel, int volume);
     void setOutputChannel(int channel);
 
 private:
-    //static int outputChannel;
+    void deletePreviousMapping();
 };
 
 #endif // INTERFACE_H

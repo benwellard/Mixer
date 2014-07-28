@@ -10,10 +10,17 @@ public:
     explicit VolSlider(int indexNo, int channelSelected, QWidget *parent = 0);
     int index;
     int channel;
+    bool muted;
+    int currentValue;
+    void setInitValue(int value);
 signals:
     void emitIndex(int index, int volume);
+    void emitUnmutedChannel(int channel);
+    void emitMutedChannel(int channel, int currentValue);
 public slots:
     void releaseIndex(int volume);
+    void changeChannel(int channelSel);
+    void muteChannel();
 };
 
 #endif // VOLSLIDER_H

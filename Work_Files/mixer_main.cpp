@@ -34,8 +34,10 @@ void mixer_main::constructWindow()
     this->setMinimumSize(1400,800);
     QTabWidget *tabs = new QTabWidget(this);
     tabs->setMinimumSize(1400,800);
-    mix1 = new Mixer();
-    mix2 = new Mixer();
+    mix1 = new Mixer(0, 26);
+    mix2 = new Mixer(1, 28);
+    mix3 = new Mixer(2, 30);
+    mix4 = new Mixer(3, 32);
     //VolumeLevel *volumeMix1 = new VolumeLevel(mix1);
     //VolumeLevel *volumeMix2 = new VolumeLevel(mix2);
     //connect(mix1,SIGNAL(emitChannels(int)),volumeMix1,SLOT(setChannels(int)));
@@ -43,9 +45,10 @@ void mixer_main::constructWindow()
     //volumeMix1->setMinimumSize(1400,300);
     //volumeMix2->setMinimumSize(1400,300);
     connect(tabs,SIGNAL(currentChanged(int)),this,SLOT(saveAndLoadArray(int)));
-
     tabs->addTab(mix1, "Mix 1");
     tabs->addTab(mix2, "Mix 2");
+    tabs->addTab(mix3, "Mix 3");
+    tabs->addTab(mix4, "Mix 4");
 
 
 
@@ -55,15 +58,19 @@ void mixer_main::saveAndLoadArray(int tab)
 {
     if(tab == 0)
     {
-        std::cout << "tab 1";
-        mix2->saveVolumesArray();
-        mix1->loadVolumesArray();
+
     }
     else if(tab == 1)
     {
-        std::cout << "tab 2";
-        mix1->saveVolumesArray();
-        mix2->loadVolumesArray();
+
+    }
+    else if(tab == 2)
+    {
+
+    }
+    else if(tab == 3)
+    {
+
     }
 }
 
