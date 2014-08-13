@@ -3,6 +3,8 @@
 
 #include <QWidget>
 #include <QSlider>
+#include <QDial>
+
 class VolSlider : public QSlider
 {
     Q_OBJECT

@@ -5,7 +5,7 @@
 #include <QPaintEvent>
 #include <decibelworker.h>
 #include <controller.h>
-#include <QThread>
+//#include <QThread>
 #include <VolumeLevelintermixer.h>
 
 VolumeLevel::VolumeLevel(QWidget *parent) :
@@ -14,12 +14,12 @@ VolumeLevel::VolumeLevel(QWidget *parent) :
     x = 30;
     h = 200;
     fillArray();
-    VolumeLevelInterMixer *vlim = new VolumeLevelInterMixer();
-    connect(vlim,SIGNAL(emitLevels(unsigned short*)),this,SLOT(setInputLevels(unsigned short*)));
-    QThread *thread = new QThread(this);
-    vlim->moveToThread(thread);
-    connect(thread,SIGNAL(started()),vlim, SLOT(getLevels()));
-    thread->start(QThread::NormalPriority);
+    //VolumeLevelInterMixer *vlim = new VolumeLevelInterMixer();
+    //connect(vlim,SIGNAL(emitLevels(unsigned short*)),this,SLOT(setInputLevels(unsigned short*)));
+    //QThread *thread = new QThread(this);
+    //vlim->moveToThread(thread);
+    //connect(thread,SIGNAL(started()),vlim, SLOT(getLevels()));
+    //thread->start(QThread::NormalPriority);
 }
 
 

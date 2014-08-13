@@ -2,6 +2,8 @@
 #define CONTROLLER_H
 
 #include <QObject>
+#include <QMutex>
+#include <QAndroidJniObject>
 
 class Controller : public QObject
 {
@@ -9,18 +11,20 @@ class Controller : public QObject
 public:
     Controller();
 
-    static unsigned short *getLevels();
-    static void mapChannelToMix(int channel, int mixerChannel);
-    static void mapMixInput(int input, int mixerChannel, int channel);
-    static void changeVolume(int node, int volume);
-    static int getMap(int channel);
-    static int getMixerMap(int mixerChannel);
-    static int getValue(int node);
-    static void initController();
-    static void deinitController();
-    static int getChannelToMix(int channel);
+    unsigned short *getLevels();
+    void mapChannelToMix(int channel, int mixerChannel);
+    void mapMixInput(int input, int mixerChannel, int channel);
+    void changeVolume(int node, int volume);
+    int getMap(int channel);
+    int getMixerMap(int mixerChannel);
+    int getValue(int node);
+    int initController();
+    void deinitController();
+    int getChannelToMix(int channel);
+    QAndroidJniObject activity;
+    unsigned short* levelData;
+
 private:
-    static QMutex mutex;
 
 public slots:
 

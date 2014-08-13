@@ -14,13 +14,13 @@
 int mixer_init(void)
 {
     /* Open the connection to the USB mixer */
-    if (usb_mixer_connect() == USB_MIXER_FAILURE) 
-    {
-        return USB_MIXER_FAILURE;
-    }
+    //if (usb_mixer_connect() == USB_MIXER_FAILURE)
+    //{
+    //    return USB_MIXER_FAILURE;
+    //}
 
   
-    return USB_MIXER_SUCCESS;
+   // return USB_MIXER_SUCCESS;
 }
 
 int mixer_deinit(void) {

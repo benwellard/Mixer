@@ -10,23 +10,24 @@
 #include <mixer_main.h>
 #include <QComboBox>
 #include <interface.h>
-#include <QThread>
 #include <iostream>
 #include <usb_mixer.h>
 #include <controller.h>
+#include <QScrollArea>
 
 int noOfChannelsMixer = 0;
 
-Mixer::Mixer(int output, int mixerOut) : QWidget()
+
+Mixer::Mixer(int output, int mixerOut, Controller *controller) : QWidget()
 {
-    interface = new Interface(output, mixerOut);
+    interface = new Interface(output, mixerOut, controller);
     indexNo = 0;
     interface->setOutputChannel(output);
-
+    controllerp = controller;
     initVolumesArray();
     interface->MixerMapClear();
     constructMixer(output);
-    QWidget *volumes = new QWidget();
+    //QWidget *volumes = new QWidget();
 
 }
 
@@ -51,32 +52,30 @@ void Mixer::addChannel()
 void Mixer::newSlider()
 {
     //Slider
-    if(sliderLayout->count() > 0)
-    {
-    int indexNo = (sliderLayout->count()/2);
-    } else {
-        indexNo = 0;
-    }
+
+
     VolSlider *mySlider = new VolSlider(indexNo, selectedChannel);
     sliders.insert(indexNo, mySlider);
     sliders[indexNo]->setInitValue(interface->getValue(sliders[indexNo]->channel));
-    sliders[indexNo]->setFixedSize(50,250);
+    sliders[indexNo]->setInitValue(10);
+    sliders[indexNo]->setMinimumSize(100,350);
+    sliders[indexNo]->setMaximumSize(100,350);
     connect(sliders[indexNo],SIGNAL(valueChanged(int)),sliders[indexNo],SLOT(releaseIndex(int)));
     connect(sliders[indexNo],SIGNAL(emitIndex(int, int)),this,SLOT(changeVolume(int,int)));
-    sliderLayout->setSpacing(25);
+    sliderLayout->setSpacing(5);
     sliderLayout->addWidget(sliders[indexNo],Qt::AlignLeft);
     sliderLayout->setAlignment(Qt::AlignLeft);
 
 
     //Label
     QComboBox *channelBox = new QComboBox;
+    channelBox->setMinimumContentsLength(30);
     selectors.insert(indexNo, channelBox);
-    channelBox->setFixedSize(80,20);
-    for(int i = 10;i < 16;i++)
+    channelBox->setFixedSize(300,100);
+    for(int i = 0;i < 18;i++)
     {
-        QString myString = usb_mixer_get_input_name(0,i);
-        myString.remove(0,5);
-        myString.remove(4,5);
+        QString myString = usb_mixer_get_input_name(0, i);
+        myString.remove(1,2);
         channelBox->addItem(myString,Qt::DisplayRole);
         channelBox->setCurrentIndex(indexNo);
     }
@@ -85,8 +84,8 @@ void Mixer::newSlider()
     QVBoxLayout *muteChannelLayout = new QVBoxLayout();
     QPushButton *muteButton = new QPushButton();
 
-    muteButton->setFixedSize(80,50);
-    muteButton->setText("Mute");
+    muteButton->setFixedSize(150,200);
+    muteButton->setText("mute");
     connect(muteButton,SIGNAL(released()),sliders[indexNo],SLOT(muteChannel()));
     connect(sliders[indexNo],SIGNAL(emitUnmutedChannel(int)),this,SLOT(muteChannelController(int)));
     connect(sliders[indexNo],SIGNAL(emitMutedChannel(int, int)),this,SLOT(unMuteChannelController(int, int)));
@@ -94,16 +93,16 @@ void Mixer::newSlider()
     muteChannelLayout->addWidget(muteButton,0,Qt::AlignTop);
     muteChannelLayout->addWidget(channelBox,0,Qt::AlignBottom);
     sliderLayout->addLayout(muteChannelLayout);
-    indexNo++;
 }
 
 void Mixer::clearChannels(int nothing)
 {
+    /*
     QList<int> values;
-    for(int i = 0;i < 6; i++)
+    for(int i = 0;i < 18; i++)
         values.insert(i,0);
 
-    for(int i = 0; i < 6; i++)
+    for(int i = 0; i < 8; i++)
     {
         switch(sliders[i]->channel)
         {
@@ -125,19 +124,60 @@ void Mixer::clearChannels(int nothing)
         case 6:
             values[5]++;
             break;
+        case 7:
+            values[6]++;
+            break;
+        case 8:
+            values[7]++;
+            break;
+        case 9:
+            values[8]++;
+            break;
+        case 10:
+            values[9]++;
+            break;
+        case 11:
+            values[10]++;
+            break;
+        case 12:
+            values[11]++;
+            break;
+        case 13:
+            values[12]++;
+            break;
+        case 14:
+            values[13]++;
+            break;
+        case 15:
+            values[14]++;
+            break;
+        case 16:
+            values[15]++;
+            break;
+        case 17:
+            values[16]++;
+            break;
+        case 18:
+            values[17]++;
+            break;
         }
     }
-    for(int i = 0;i < 6; i++)
+
+    for(int i = 0;i < 18; i++)
         if((values[i] > 0))
+
         {
-            interface->ChangeVolume(i + 1, sliders[i]->currentValue);
-        }
-    for(int i = 0; i < 6; i++)
-        if(values[i] == 0)
-        {
-            interface->ChangeVolume(i + 1, -127);
+            //interface->ChangeVolume(i + 1, sliders[i]->currentValue);
         }
 
+    for(int i = 0; i < 8; i++)
+
+        if(values[i] == 0)
+        {
+            //interface->ChangeVolume(i + 1, -127);
+        }
+
+    */
 }
 
 void Mixer::muteChannelController(int channel)
@@ -150,21 +190,10 @@ void Mixer::unMuteChannelController(int channel, int volume)
     interface->ChangeVolume(channel, volume);
 }
 
-QComboBox* Mixer::addChannelBox()
-{
-    QComboBox *channelSelect = new QComboBox(this);
-    channelSelect->addItem("1", Qt::DisplayRole);
-    channelSelect->addItem("2", Qt::DisplayRole);
-    channelSelect->addItem("3", Qt::DisplayRole);
-    channelSelect->addItem("4", Qt::DisplayRole);
-    channelSelect->addItem("5", Qt::DisplayRole);
-    channelSelect->addItem("6", Qt::DisplayRole);
-    return channelSelect;
-}
-
 QComboBox* Mixer::addOutputBox()
 {
     QComboBox *outputSelect = new QComboBox(this);
+    outputSelect->setFixedSize(100,200);
     outputSelect->addItem("1/2", Qt::DisplayRole);
     outputSelect->addItem("3/4", Qt::DisplayRole);
     outputSelect->addItem("5/6", Qt::DisplayRole);
@@ -176,30 +205,21 @@ void Mixer::constructMixer(int output) {
     QVBoxLayout *mainLayout = new QVBoxLayout();
     this->setLayout(mainLayout);
 
-    QPushButton *newChannel = new QPushButton(this);
-    QComboBox *channelSelect = addChannelBox();
     QComboBox *outputSelect = addOutputBox();
     QLabel *outputLabel = new QLabel(this);
-
+    outputLabel->setFixedSize(100,200);
     outputLabel->setText("Choose output");
-    newChannel->move(1200,600);
-    channelSelect->move(1200,550);
-    outputLabel->move(1200,675);
-    outputSelect->move(1200,700);
+    outputLabel->move(1200,800);
+    outputSelect->move(1200,850);
 
-    newChannel->setText("Add Channel");
-    newChannel->setMinimumSize(110,70);
-    newChannel->setMaximumSize(200,100);
-    channelSelect->setMinimumSize(100,50);
-    channelSelect->setMaximumSize(200,100);
 
     mainLayout->setAlignment(Qt::AlignCenter);
     mainLayout->addSpacing(200);
     sliderLayout = new QHBoxLayout;
     mainLayout->addLayout(sliderLayout);
     selectedChannel = 1;
-
-    for(int i = 0;i < 6;i++)
+    indexNo = 0;
+    for(int i = 0;i < 18;i++)
     {
         selectedChannel = i;
         addChannel();
@@ -207,11 +227,11 @@ void Mixer::constructMixer(int output) {
     }
 
     connect(this,SIGNAL(emitCurrentOutput(int)),outputSelect,SLOT(setCurrentIndex(int)));
-    connect(channelSelect,SIGNAL(activated(int)),this,SLOT(setChannel(int)));
     connect(this,SIGNAL(emitVolume(int,int)),interface,SLOT(ChangeVolume(int,int)));
     connect(outputSelect,SIGNAL(activated(int)),interface,SLOT(setOutputChannel(int)));
     emit emitCurrentOutput(output);
 }
+
 
 void Mixer::changeVolume(int indexVal, int vol)
 {
@@ -221,16 +241,16 @@ void Mixer::changeVolume(int indexVal, int vol)
 void Mixer::saveVolumesArray()
 {
     for(int i = 0;i < 47;i++)
-        volArray[i] = Controller::getValue(i+80);
+        volArray[i] = controllerp->getValue(i+80);
     int c = 0;
-    c = c;
+
 }
 
 void Mixer::loadVolumesArray()
 {
     for(int i = 0;i < 47;i++)
     {
-        Controller::changeVolume(i+80, volArray[i]);
+        controllerp->changeVolume(i+80, volArray[i]);
     }
 }
 

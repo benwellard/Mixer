@@ -7,12 +7,13 @@
 #include <volslider.h>
 #include <QList>
 #include <interface.h>
-
+#include <controller.h>
+#include <QScrollArea>
 class Mixer : public QWidget
 {
     Q_OBJECT
 public:
-    explicit Mixer(int output, int mixerOut);
+    explicit Mixer(int output, int mixerOut, Controller *controller);
 signals:
     void emitVolume(int vol, int indexNo);
     void emitChannels(int channels);
@@ -46,8 +47,8 @@ private:
     void initVolumesArray();
     QList<int> volArray;
     bool mute;
-
-
+    Controller *controllerp;
+    QScrollArea *area;
 };
 
 #endif // MIXER_H

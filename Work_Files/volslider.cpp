@@ -1,5 +1,7 @@
 #include "volslider.h"
 #include <QSlider>
+#include <QDial>
+
 VolSlider::VolSlider(int indexNo, int channelSelected, QWidget *parent) :
     QSlider()
 {
@@ -8,7 +10,7 @@ VolSlider::VolSlider(int indexNo, int channelSelected, QWidget *parent) :
     index = indexNo;
     //channels are assigned incorrectly
     //TODO assign channels correctly
-    channel = channelSelected + 1;
+    channel = channelSelected;
     muted = false;
 }
 

@@ -4,7 +4,8 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui\
+            androidextras
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -18,7 +19,6 @@ SOURCES += main.cpp\
     volslider.cpp \
     decibelworker.cpp \
     usb_mixer.cpp \
-    mixer_app.cpp \
     controller.cpp \
     volumelevelintermixer.cpp \
     interface.cpp \
@@ -29,12 +29,12 @@ HEADERS  += \
     volumelevel.h \
     volslider.h \
     decibelworker.h \
-    libusb.h \
     usb_mixer.h \
     controller.h \
     volumelevelintermixer.h \
     interface.h \
-    mixer_main.h
+    mixer_main.h \
+    libusb.h
 
 FORMS    += \
     mixer_main.ui
@@ -45,9 +45,22 @@ OTHER_FILES +=
 
 
 
-macx: LIBS += -L$$PWD/ -lusb-1.0.0
+ANDROID_PACKAGE_SOURCE_DIR += $$PWD/
+
+ANDROID_PACKAGE_SOURCE_DIR/src = $$PWD/src
 
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/
 
 
+
+
+#macx:LIBS += -L$$PWD/ -lusb-1.0.0
+
+#INCLUDEPATH += $$PWD/
+#DEPENDPATH += $$PWD/
+
+LIBS += -L$$PWD/ -lusb1.0
+
+INCLUDEPATH += $$PWD/
+DEPENDPATH += $$PWD/

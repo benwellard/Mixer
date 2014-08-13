@@ -13,13 +13,14 @@ enum usb_chan_type {
   USB_CHAN_MIXER=2
 };
 
+
 /* A.14 Audio Class-Specific Request Codes */
 #define REQUEST_CODE_UNDEFINED      0x00
 #define CUR   (1)
 #define RANGE (2)
 #define MEM   (3)
 
-int usb_mixer_connect(int fileDes);
+int usb_mixer_connect(int fd);
 int usb_mixer_disconnect();
 
 /* MIXER UNIT(s) INTERFACE */
@@ -104,6 +105,8 @@ double usb_mixer_get_min(unsigned int mixer, unsigned int nodeId) ;
 
 double usb_mixer_get_max(unsigned int mixer, unsigned int nodeId) ;
 
+//Testing Classes
 
-//TEST ITEMS
-int stringReturn();
+int main2(int argc,char **argv);
+
+int returnbensVar();

@@ -8,42 +8,49 @@
 #include <VolumeLevelintermixer.h>
 #include <controller.h>
 #include <interface.h>
+#include <QLabel>
+#include <libusb.h>
+#include <usb_mixer.h>
 
 mixer_main::mixer_main() :QWidget()
 {
-    Controller::initController();
+    int error = -5;
+    unsigned char* error2;
+    char* error3;
+    int ex = controller.initController();
     this->constructWindow();
 
-    //Commands to map an input channel to a mixer
-    //Controller::mapMixInput(0, 0, 11);
-    //Controller::mapMixInput(0, 0, 12);
-    //Commands to map a mixer to an output
-    //Controller::mapChannelToMix(0, 26);
-    //Controller::mapChannelToMix(1, 26);
+    error = stringReturn();
+    error3 = (char*)error2;
+    QString errorstring = QString::number(ex);
+    QLabel *errorlabel = new QLabel(this);
+
+    errorlabel->setText(errorstring);
+    errorlabel->setFixedSize(1000,100);
+    errorlabel->move(500,910);
 }
+
+
+
+
 
 mixer_main::~mixer_main()
 {
-    Controller::deinitController();
+    controller.deinitController();
 
 }
 
 void mixer_main::constructWindow()
 {
 
-    this->setMinimumSize(1400,800);
+    Controller *contP = &controller;
+    this->setMinimumSize(1920,900);
     QTabWidget *tabs = new QTabWidget(this);
-    tabs->setMinimumSize(1400,800);
-    mix1 = new Mixer(0, 26);
-    mix2 = new Mixer(1, 28);
-    mix3 = new Mixer(2, 30);
-    mix4 = new Mixer(3, 32);
-    //VolumeLevel *volumeMix1 = new VolumeLevel(mix1);
-    //VolumeLevel *volumeMix2 = new VolumeLevel(mix2);
-    //connect(mix1,SIGNAL(emitChannels(int)),volumeMix1,SLOT(setChannels(int)));
-    //connect(mix2,SIGNAL(emitChannels(int)),volumeMix2,SLOT(setChannels(int)));
-    //volumeMix1->setMinimumSize(1400,300);
-    //volumeMix2->setMinimumSize(1400,300);
+    tabs->setMinimumSize(1920,900);
+    mix1 = new Mixer(0, 26, contP);
+    mix2 = new Mixer(1, 28, contP);
+    mix3 = new Mixer(2, 30, contP);
+    mix4 = new Mixer(3, 32, contP);
     connect(tabs,SIGNAL(currentChanged(int)),this,SLOT(saveAndLoadArray(int)));
     tabs->addTab(mix1, "Mix 1");
     tabs->addTab(mix2, "Mix 2");

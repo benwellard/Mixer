@@ -4,6 +4,8 @@
 #include <QWidget>
 #include <volumelevel.h>
 #include <mixer.h>
+#include <controller.h>
+
 
 namespace Ui {
 class mixer_main;
@@ -19,7 +21,7 @@ public:
     VolumeLevel *volumeMix1;
     VolumeLevel *volumeMix2;
     VolumeLevel *volumeMix3;
-
+    Controller controller;
 private slots:
     void constructWindow();
     void saveAndLoadArray(int tab);

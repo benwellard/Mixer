@@ -2,12 +2,13 @@
 #define INTERFACE_H
 
 #include <QObject>
+#include <controller.h>
 
 class Interface : public QObject
 {
     Q_OBJECT
 public:
-    Interface(int outputchannel, int mixChannel);
+    Interface(int outputchannel, int mixChannel, Controller *controller);
     void MixerMapClear();
     int IDtoAbs(int mixerID);
     void addChannel(int channel);
@@ -18,6 +19,7 @@ public:
     int mixerChannel;
     int prevChannel;
     int prevChannel2;
+    Controller *controlleri;
 public slots:
     void ChangeVolume(int channel, int volume);
     void setOutputChannel(int channel);
