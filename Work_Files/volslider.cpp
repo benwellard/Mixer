@@ -5,8 +5,7 @@
 VolSlider::VolSlider(int indexNo, int channelSelected, QWidget *parent) :
     QSlider()
 {
-    this->setTickPosition(QSlider::TicksRight);
-    //currentValue = 0;
+    this->setStyleSheet("QSlider::handle { image: url(:/new/prefix1/sliderimage.jpg); border-radius:2px;}");
     index = indexNo;
     //channels are assigned incorrectly
     //TODO assign channels correctly
@@ -21,8 +20,8 @@ void VolSlider::releaseIndex(int volume)
        volume = -1000;
     emit emitIndex(channel, volume);
 }
-
 void VolSlider::muteChannel()
+
 {
     if(!muted) {
     muted = true;
@@ -37,7 +36,9 @@ void VolSlider::muteChannel()
 
 void VolSlider::changeChannel(int channelSel)
 {
-    channel = channelSel + 1;
+    //channel = channelSel;
+    //Map the new selected Channel(channelSel) to this
+
 }
 
 void VolSlider::setInitValue(int value)

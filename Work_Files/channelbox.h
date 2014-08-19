@@ -1,19 +1,22 @@
 #ifndef CHANNELBOX_H
 #define CHANNELBOX_H
 
-#include <QWidget>
 #include <QComboBox>
 
 class ChannelBox : public QComboBox
 {
     Q_OBJECT
 public:
-    explicit ChannelBox(QWidget *parent = 0);
-    void showPopup();
-signals:
+    ChannelBox(int indexNo);
+    int index;
+    int channel;
+    int getChannel();
 
 public slots:
+    void setChannel(int);
 
+signals:
+    void emitChannel(int,int);
 };
 
 #endif // CHANNELBOX_H

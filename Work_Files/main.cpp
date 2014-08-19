@@ -11,7 +11,7 @@ class MyProxyStyle : public QProxyStyle
     {
         switch(metric) {
           case PM_SliderLength            : return 100;
-          case PM_SliderThickness         : return 150;
+          case PM_SliderThickness         : return 200;
           default                         : return (QProxyStyle::pixelMetric(metric,option,widget));
         }
     }
@@ -22,6 +22,11 @@ class MyProxyStyle : public QProxyStyle
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
+
+    //TODO Add outputSelector box, get it working
+    //Add custom artwork for as much as possible
+
+
 
 
 

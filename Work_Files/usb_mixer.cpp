@@ -645,6 +645,8 @@ static int find_xmos_device(unsigned int id, int filed)
                         {
                             const libusb_interface_descriptor *inter_desc = 
                                 ((libusb_interface *)&config_desc->interface[j])->altsetting;
+                            bensVar2 = libusb_claim_interface(devh,j);
+                            libusb_control_transfer(devh,0,58,1,0,NULL,NULL,0);
                             get_mixer_info(inter_desc->extra, inter_desc->extra_length, j, config_desc);
                         }
                     } 

@@ -55,7 +55,7 @@ import org.kde.necessitas.ministro.IMinistro;
 import org.kde.necessitas.ministro.IMinistroCallback;
 import android.app.*;
 import android.app.PendingIntent;
-
+import android.media.*;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
@@ -595,17 +595,19 @@ public class QtActivity extends Activity
         while(deviceIterator.hasNext())
         {
             device = deviceIterator.next();
-            device = deviceIterator.next();
-            mUsbManager.requestPermission(device, mPermissionIntent);
-            while(ft < 0)
+            if(device.getVendorId() == 8369)
             {
-                 if(permissionGranted)
-                 {
-                     connection = mUsbManager.openDevice( device );
-                     int fdt = connection.getFileDescriptor();
-                     ft = fdt;
+                mUsbManager.requestPermission(device, mPermissionIntent);
+                while(ft < 0)
+                {
+                     if(permissionGranted)
+                     {
+                         connection = mUsbManager.openDevice( device );
+                         int fdt = connection.getFileDescriptor();
+                         ft = fdt;
+                     }
                  }
-             }
+            }
          }
 
         return ft;

@@ -60,7 +60,8 @@ int Controller::getMixerMap(int mixerChannel)
 
 void Controller::mapMixInput(int input, int mixerChannel, int channel)
 {
-    usb_mixsel_set_state(input, mixerChannel, channel);
+    //Map channel to mixerChannel
+    usb_mixsel_set_state(0, mixerChannel, channel);
 }
 
 void Controller::changeVolume(int node, int volume)
@@ -80,6 +81,12 @@ int Controller::getValue(int node)
     return y;
 }
 
-
+bool Controller::isChannelFree(int channel)
+{
+    if(getMap(channel) < 26)
+        return true;
+    else
+        return false;
+}
 
 

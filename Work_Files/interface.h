@@ -23,7 +23,7 @@ public:
 public slots:
     void ChangeVolume(int channel, int volume);
     void setOutputChannel(int channel);
-
+    void setChannel(int index, int channel);
 private:
     void deletePreviousMapping();
 };

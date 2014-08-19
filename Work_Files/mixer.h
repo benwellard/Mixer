@@ -9,6 +9,14 @@
 #include <interface.h>
 #include <controller.h>
 #include <QScrollArea>
+#include <QPalette>
+#include <QPushButton>
+#include <channelbox.h>
+#include <QGroupBox>
+#include <QCheckBox>
+#include <QDialog>
+#include <outputbox.h>
+
 class Mixer : public QWidget
 {
     Q_OBJECT
@@ -24,19 +32,28 @@ public slots:
     void constructMixer(int output);
     void setChannels(int n);
     void addChannel();
-    void setChannel(int channel);
     void newSlider();
     void saveVolumesArray();
     void loadVolumesArray();
     void muteChannelController(int channel);
     void unMuteChannelController(int channel, int volume);
-    void clearChannels(int nothing);
+    void setOutputs();
+    void populateOutputs();
+    void dePopulateOutputs();
+    void deMapChannel(int index);
 
 private:
+    QPushButton *hideOutputs;
+    QVBoxLayout *outputLayout;
     QList<VolSlider *> sliders;
-    QList<QComboBox *> selectors;
+    QList<ChannelBox *> selectors;
+    QList<QPushButton *> mutes;
+    QList<OutputBox *> outputs;
+    QDialog *outputFrame;
+    QPalette p;
     int selectedChannel;
     int indexNo;
+    int numOuts;
     QHBoxLayout *sliderLayout;
     QVBoxLayout *mainLayout;
     QWidget *channels;
@@ -45,10 +62,13 @@ private:
     QComboBox *addOutputBox();
     Interface *interface;
     void initVolumesArray();
+    void constructOutputs();
     QList<int> volArray;
     bool mute;
     Controller *controllerp;
     QScrollArea *area;
+
+    QCheckBox *output12, *output34, *output56, *output78;
 };
 
 #endif // MIXER_H

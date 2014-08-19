@@ -9,33 +9,30 @@ Interface::Interface(int outchannel, int mixChannel, Controller *controller)
     prevChannel2 = 0;
     mixerChannel = mixChannel;
     controlleri = controller;
+    //controlleri->mapChannelToMix(outputChannel, mixerChannel);
+    //controlleri->mapChannelToMix(outputChannel + 1,mixerChannel + 1);
 }
 
 
 void Interface::MixerMapClear() {
 
-    controlleri->mapChannelToMix(0, 26);
-    controlleri->mapChannelToMix(1, 27);
-    controlleri->mapChannelToMix(2, 28);
-    controlleri->mapChannelToMix(3, 29);
-    controlleri->mapChannelToMix(4, 30);
-    controlleri->mapChannelToMix(5, 31);
-    controlleri->mapChannelToMix(6, 32);
-    controlleri->mapChannelToMix(7, 33);
-    for(int i = 0;i < 144; i++)
-        controlleri->changeVolume(i, 80);
+
 }
 
 unsigned short* Interface::getLevels()
 {
+    //returns volume levels as a short array
     return controlleri->getLevels();
 }
 
 void Interface::ChangeVolume(int channel, int volume)
 {
 
+    //Calculates node from output(mixer) channel and input channel
     int node = outputChannel + (channel * 8);
-    //volume = -50 + volume;
+
+    //If the slider for an input channel is below 1, it sets the relevant volume level to -127
+    //Otherwise sets the node to whatever value it is passed in volume
     if(volume < 1)
         volume = -127;
     controlleri->changeVolume(node, volume);
@@ -45,51 +42,33 @@ void Interface::ChangeVolume(int channel, int volume)
 
 int Interface::IDtoAbs(int mixerID)
 {
+    //Obselete
     return mixerID + 26;
 }
 
 int Interface::AbstoID(int absChannel)
 {
+    //Obselete
     return absChannel - 26;
 }
 
 void Interface::addChannel(int channel)
 {
-
-
+    //Calculate node, and retrieve volume level from device
     int node = (channel * 8) + outputChannel;
-    controlleri->changeVolume(node, 100);
-
-    if(controlleri->getValue(node) < 1)
-    {
-    controlleri->changeVolume(node ,-127);
-    controlleri->changeVolume(node + 1,-127);
-    } else {
     controlleri->changeVolume(node, controlleri->getValue(node));
     controlleri->changeVolume(node + 1, controlleri->getValue(node));
-    }
-
 }
 
 void Interface::setOutputChannel(int channel)
 {
-
-    prevChannel = outputChannel;
-    prevChannel2 = prevChannel;
-    channel = channel * 2;
-    prevChannel = channel;
-    deletePreviousMapping();
-    controlleri->mapChannelToMix(prevChannel, mixerChannel);
-    controlleri->mapChannelToMix(prevChannel + 1, mixerChannel + 1);
-
+    controlleri->mapChannelToMix(channel,mixerChannel);
+    controlleri->mapChannelToMix(channel + 1,mixerChannel + 1);
 }
 
-void Interface::deletePreviousMapping()
+void Interface::setChannel(int index, int channel)
 {
-    //Maps whatever outputs the mixer is going FROM to 2 dud channels
-    controlleri->mapChannelToMix(prevChannel2, controlleri->getChannelToMix(prevChannel));
-    controlleri->mapChannelToMix(prevChannel2 + 1, controlleri->getChannelToMix(prevChannel + 1));
-
+    controlleri->mapMixInput(0,index,channel);
 }
 
 int Interface::getValue(int channel)

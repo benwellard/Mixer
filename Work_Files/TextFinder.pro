@@ -22,7 +22,10 @@ SOURCES += main.cpp\
     controller.cpp \
     volumelevelintermixer.cpp \
     interface.cpp \
-    mixer_main.cpp
+    mixer_main.cpp \
+    qfingerscrollarea.cpp \
+    channelbox.cpp \
+    outputbox.cpp
 
 HEADERS  += \
     mixer.h \
@@ -34,12 +37,16 @@ HEADERS  += \
     volumelevelintermixer.h \
     interface.h \
     mixer_main.h \
-    libusb.h
+    libusb.h \
+    qfingerscrollarea.h \
+    channelbox.h \
+    outputbox.h
 
 FORMS    += \
     mixer_main.ui
 
-RESOURCES +=
+RESOURCES += \
+    Resources.qrc
 
 OTHER_FILES +=
 

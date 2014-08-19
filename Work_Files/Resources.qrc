@@ -1,0 +1,7 @@
+<RCC>
+    <qresource prefix="/new/prefix1">
+        <file>sliderimage.jpg</file>
+        <file>muteimage.jpg</file>
+        <file>mute2image.jpg</file>
+    </qresource>
+</RCC>

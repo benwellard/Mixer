@@ -23,6 +23,7 @@ public:
     int getChannelToMix(int channel);
     QAndroidJniObject activity;
     unsigned short* levelData;
+    bool isChannelFree(int channel);
 
 private:
 
