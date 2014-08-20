@@ -19,7 +19,7 @@ enum usb_chan_type {
 #define RANGE (2)
 #define MEM   (3)
 
-int usb_mixer_connect(int fileDes);
+int usb_mixer_connect();
 int usb_mixer_disconnect();
 
 /* MIXER UNIT(s) INTERFACE */

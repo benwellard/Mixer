@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include "usb_mixer.h"
-#include "libusb.h"
+#include "global.h"
 
 /* Note: this is all quite generic and could be simplified ALOT for a specific design */
 
@@ -16,7 +16,7 @@
 
 #define USB_REQUEST_TO_DEV 0x21 /* D7 	Data direction: 0 (Host to device)
                                  * D6:5	Type: 01 (Class)
-                                 * D4:0 Receipient: 1 (Interface) */
+                 * D4:0 Receipient: 1 (Interface) */
 #define USB_REQUEST_FROM_DEV 0xa1
 
 #define USB_CS_INTERFACE 0x24
@@ -37,18 +37,18 @@
 // Input to device
 //#define MICROPHONE 0x02
 
-#define ID_XU_OUT       51
-#define ID_XU_IN        52
+#define ID_XU_OUT 51
+#define ID_XU_IN 52
 
 #define OFFSET_BLENGTH 0
 #define OFFSET_BDESCRIPTORTYPE 1
 #define OFFSET_BDESCRIPTORSUBTYPE 2
 #define OFFSET_BUNITID 3
 
-#define OFFSET_FU_BSOURCEID   4
+#define OFFSET_FU_BSOURCEID 4
 
-#define OFFSET_XU_BNRINPINS   6
-#define OFFSET_XU_BSOURCEID   7
+#define OFFSET_XU_BNRINPINS 6
+#define OFFSET_XU_BSOURCEID 7
 
 #define OFFSET_IT_WTERMINALTYPE 5
 #define OFFSET_IT_BNRCHANNELS 8
@@ -56,43 +56,43 @@
 
 typedef struct
 {
-    double min;
-    double max;
-    double res;
-    double weight;
+       double min;
+       double max;
+       double res;
+       double weight;
 } mixer_node;
 
-typedef struct 
+typedef struct
 {
-    unsigned int id;
-    unsigned int num_inputs;
-    char input_names[USB_MIXER_INPUTS][USB_MIXER_MAX_NAME_LEN]; /* Current mixer input names -
-                                                                 * we dont really need to store these */
-    int input_connections[USB_MIXER_INPUTS];
-    unsigned int num_outputs;
-    char output_names[USB_MIXER_INPUTS][USB_MIXER_MAX_NAME_LEN];
-    unsigned int num_inPins;
-    mixer_node nodes[USB_MIXER_INPUTS * USB_MIXER_OUTPUTS];
+  unsigned int id;
+  unsigned int num_inputs;
+  char input_names[USB_MIXER_INPUTS][USB_MIXER_MAX_NAME_LEN]; /* Current mixer input names-
+                                 * we dont really need to store these */
+  int input_connections[USB_MIXER_INPUTS];
+  unsigned int num_outputs;
+  char output_names[USB_MIXER_INPUTS][USB_MIXER_MAX_NAME_LEN];
+  unsigned int num_inPins;
+  mixer_node nodes[USB_MIXER_INPUTS * USB_MIXER_OUTPUTS];
 } usb_mixer_device;
 
 typedef struct {
-    int cur;
-    int default_value;
-    char name[USB_MIXER_MAX_NAME_LEN];
-    enum usb_chan_type ctype;
-}channel_map_node;
+  int cur;
+  int default_value;
+  char name[USB_MIXER_MAX_NAME_LEN];
+  enum usb_chan_type ctype;
+} channel_map_node;
 
 typedef struct {
     int numInputs;
     int numOutputs;
     channel_map_node map[USB_MAX_CHANNEL_MAP_SIZE];
-}channel_mapp;
+} channel_mapp;
 
 typedef struct
 {
     unsigned int id;
     unsigned int numInputs;
-    char inputStrings[USB_MIXER_INPUTS*4][USB_MIXER_MAX_NAME_LEN];   /* Complete list of all possible inputs */
+    char inputStrings[USB_MIXER_INPUTS*4][USB_MIXER_MAX_NAME_LEN]; /* Complete list of all possible inputs */
     unsigned int numOutputs;
     unsigned int state[USB_MIXER_INPUTS];
 } t_usb_mixSel;
@@ -110,77 +110,82 @@ typedef struct {
 } usb_mixer_handle;
 
 static usb_mixer_handle *usb_mixers = NULL;
-unsigned char* bensVar;
-int bensVar2;
-static libusb_device_handle *devh = NULL;
+
+static TUsbAudioHandle h;
+
 /* Issue a generic control/class GET request to a specific unit in the Audio Interface */
 int usb_audio_class_get(unsigned char bRequest, unsigned char cs, unsigned char cn, unsigned short unitID, unsigned short wLength, unsigned char *data)
 {
-  return libusb_control_transfer(devh, 
-                          USB_REQUEST_FROM_DEV, 
-                          bRequest, 
-                          (cs<<8) | cn, /* wValue */
-                          (unitID & 0xff) << 8 | 0x0,
-                          data, 
-			  wLength, 
-		          0);
+  return TUSBAUDIO_AudioControlRequestGet(h,
+                                   unitID,
+                                        bRequest,
+                                        cs,
+                                        cn,
+                                        data,
+                                        wLength,
+                                        NULL,
+                                        1000);
 }
 
 /* Issue a generic control/class SET request to a specific unit in the Audio Interface */
 int usb_audio_class_set(unsigned char bRequest, unsigned char cs, unsigned char cn, unsigned short unitID, unsigned short wLength, unsigned char *data)
 {
-  return libusb_control_transfer(devh, 
-                          USB_REQUEST_TO_DEV, 
-                          bRequest, 
-                          (cs<<8) | cn, /* wValue */
-                          (unitID & 0xff) << 8 | 0x0,
-                          data, 
-			  wLength, 
-		          0);
+  return TUSBAUDIO_AudioControlRequestSet(h,
+                                   unitID,
+                                        bRequest,
+                                        cs,
+                                        cn,
+                                        data,
+                                        wLength,
+                                        NULL,
+                                        1000);
 }
 
 /* Note, this never get cached in an object since it can change on the device side */
 int usb_mixer_mem_get(unsigned int mixer, unsigned offset, unsigned char *data)
 {
-  return libusb_control_transfer(devh, 
-			  USB_REQUEST_FROM_DEV, 	/* nRequest */
-                          MEM, 				/* bRequest */
-                          offset, 			/* wValue */
-                          (usb_mixers->usb_mixer[mixer].id & 0xff) << 8 | 0x0, /* wIndex */ 
-			  data, 64, 0);
+  return TUSBAUDIO_AudioControlRequestGet(h,
+                                   usb_mixers->usb_mixer[mixer].id,
+                                        MEM,
+                                        0, // cs
+                                        offset, //was cn
+                                        &data,
+                                        64,
+                                        NULL,
+                                        1000);
 }
 
-static const unsigned char *find_input_term_unit_by_id(const unsigned char *data, int length, int id) 
+static const unsigned char *find_input_term_unit_by_id(const unsigned char *data, int length, int id)
 {
-    const unsigned char *interface_data = data;
-    while (length) 
+  const unsigned char *interface_data = data;
+  while (length)
+  {
+    const unsigned char *interface_len = interface_data;
+    int sub_type = *(interface_len + 2);
+    if (sub_type == USB_INPUT_TERM_TYPE)
     {
-        const unsigned char *interface_len = interface_data;
-        int sub_type = *(interface_len + 2);
-        if (sub_type == USB_INPUT_TERM_TYPE) 
-        {
-            int unit_id = *(interface_len + 3);
-            if (unit_id == id) 
-            {
-                return interface_len;
-            }
-        }
-        interface_data+=*interface_len;
-        length -= *interface_len;
+      int unit_id = *(interface_len + 3);
+      if (unit_id == id)
+      {
+        return interface_len;
+      }
     }
-    return NULL;
+    interface_data+=*interface_len;
+    length -= *interface_len;
+  }
+  return NULL;
 }
 
 static const unsigned char *find_connected_feature_unit_by_id(const unsigned char *data, int length, int id) {
   const unsigned char *interface_data = data;
   while (length)
   {
-        const unsigned char *interface_len = interface_data;
-        int sub_type = *(interface_len + 2);
-        if (sub_type == USB_FEATURE_UNIT_TYPE) {
-        //int unit_id = *(interface_len + 3);
-        int src_unit_id = *(interface_len + 4);
-        if (src_unit_id == id) {
+    const unsigned char *interface_len = interface_data;
+    int sub_type = *(interface_len + 2);
+    if (sub_type == USB_FEATURE_UNIT_TYPE) {
+      //int unit_id = *(interface_len + 3);
+      int src_unit_id = *(interface_len + 4);
+      if (src_unit_id == id) {
         return interface_len;
       }
     }
@@ -193,14 +198,14 @@ static const unsigned char *find_connected_feature_unit_by_id(const unsigned cha
 static const unsigned char *findUnit(const unsigned char *descs, int length, int id)
 {
     const unsigned char *interface_data = descs;
-    while (length) 
+    while (length)
     {
         const unsigned char *interface_len = interface_data;
         int bDescriptorType = *(interface_len + 1);
-        if (bDescriptorType == CS_INTERFACE) 
+        if (bDescriptorType == CS_INTERFACE)
         {
             int unit_id = *(interface_len + 3);
-            if (unit_id == id) 
+            if (unit_id == id)
             {
                 return interface_len;
             }
@@ -239,14 +244,14 @@ static double dev_get_mixer_value(unsigned int mixer, unsigned int nodeId)
 }
 
 /* Populates min, max, res */
-static unsigned short dev_get_mixer_range(unsigned int mixer, unsigned int channel, 
+static unsigned short dev_get_mixer_range(unsigned int mixer, unsigned int channel,
          double *min, double *max, double *res)
 {
     short data[64];
 
     short min2, max2, res2;
 
-    usb_audio_class_get(RANGE, MU_MIXER_CONTROL, channel, usb_mixers->usb_mixer[mixer].id, 8, (unsigned char *) data); 
+    usb_audio_class_get(RANGE, MU_MIXER_CONTROL, channel, usb_mixers->usb_mixer[mixer].id, 8, (unsigned char *) data);
 
     min2 = data[1];
     max2 = data[2];
@@ -256,7 +261,7 @@ static unsigned short dev_get_mixer_range(unsigned int mixer, unsigned int chann
     *max = (double)max2/256;
     *res = (double)res2/256;
 
-   return 0;
+    return 0;
 }
 
 int dev_get_channel_map(int channel, int unitId)
@@ -273,28 +278,28 @@ static int dev_set_channel_map(int channel, int val, int unitId)
     return 0;
 }
 
-static int mixer_update_all_nodes(unsigned int mixer_index) 
+static int mixer_update_all_nodes(unsigned int mixer_index)
 {
     int i = 0;
     int j = 0;
     double min, max, res;
- 
-    for (i = 0; i < usb_mixers->usb_mixer[mixer_index].num_inputs; i++) 
+
+    for (i = 0; i < usb_mixers->usb_mixer[mixer_index].num_inputs; i++)
     {
-        for (j = 0; j < usb_mixers->usb_mixer[mixer_index].num_outputs; j++) 
+        for (j = 0; j < usb_mixers->usb_mixer[mixer_index].num_outputs; j++)
         {
             dev_get_mixer_range(mixer_index, (i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j, &min, &max, &res);
-           
-            usb_mixers->usb_mixer[mixer_index].nodes[(i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j].min = min; 
-            usb_mixers->usb_mixer[mixer_index].nodes[(i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j].max = max; 
-            usb_mixers->usb_mixer[mixer_index].nodes[(i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j].res = res; 
+
+            usb_mixers->usb_mixer[mixer_index].nodes[(i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j].min = min;
+            usb_mixers->usb_mixer[mixer_index].nodes[(i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j].max = max;
+            usb_mixers->usb_mixer[mixer_index].nodes[(i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j].res = res;
             //printf("%f, %f, %f\n", min, max, res);
 
-            usb_mixers->usb_mixer[mixer_index].nodes[(i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j].weight = 
+            usb_mixers->usb_mixer[mixer_index].nodes[(i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j].weight =
                 dev_get_mixer_value(mixer_index, (i*usb_mixers->usb_mixer[mixer_index].num_outputs)+j);
-        }
-    }
-    return 0;
+         }
+   }
+   return 0;
 }
 
 /* Start at unit %id, find it in descs, keep recursively parsing up path(s) until get to Input Term and add strings */
@@ -304,6 +309,7 @@ int addStrings(const unsigned char *data, int length, int mixer_index, int id, i
 
     /* Find this unit in the descs */
     currentUnitPtr = findUnit(data, length, id);
+    TUsbAudioStatus st;
 
     if(currentUnitPtr != NULL)
     {
@@ -313,7 +319,7 @@ int addStrings(const unsigned char *data, int length, int mixer_index, int id, i
 
              /* Get channel names */
 #ifdef DEBUG
-            printf("Input terminal found on path (ID: %d): %d channels, total: %d\n",*(currentUnitPtr+OFFSET_BUNITID),  
+            printf("Input terminal found on path (ID: %d): %d channels, total: %d\n",*(currentUnitPtr+OFFSET_BUNITID),
                     *(currentUnitPtr+OFFSET_IT_BNRCHANNELS), chanCount);
 #endif
 
@@ -324,28 +330,28 @@ int addStrings(const unsigned char *data, int length, int mixer_index, int id, i
             printf("iChannelNames: %d wTerminalType: %d\n", iChannelNames, wTerminalType);
 
             printf("Channels found:\n");
-            
+
 #endif
             for(int i = 0; i < *(currentUnitPtr+OFFSET_IT_BNRCHANNELS); i++)
             {
-                unsigned char mixer_input_name[USB_MIXER_MAX_NAME_LEN];
-                memset(mixer_input_name, 0 ,USB_MIXER_MAX_NAME_LEN);
-                if (wTerminalType == 1) 
+                WCHAR mixer_input_name[USB_MIXER_MAX_NAME_LEN];
+                char mixer_input_name_copy[USB_MIXER_MAX_NAME_LEN];
+                if (wTerminalType == 1)
                 {
                     strcpy(usb_mixers->usb_mixSel[mixer_index].inputStrings[chanCount], "DAW - ");
 
                     //usb_mixers->channel_maps[usb_mixers->num_channel_maps].ctype = (enum usb_chan_type) USB_CHAN_OUT;
-                    
+
                     usb_mixers->audChannelMap.numOutputs = usb_mixers->audChannelMap.numOutputs +1;
 
                     usb_mixers->audChannelMap.map[usb_mixers->audChannelMap.numInputs].ctype = (enum usb_chan_type) USB_CHAN_OUT;
                     usb_mixers->usbChannelMap.map[usb_mixers->usbChannelMap.numInputs].ctype = (enum usb_chan_type) USB_CHAN_OUT;
-                    
+
                 }
-                else  
+                else
                 {
                     strcpy(usb_mixers->usb_mixSel[mixer_index].inputStrings[chanCount], "AUD - ");
-                    
+
                     //usb_mixers->channel_maps[usb_mixers->num_channel_maps].ctype = (enum usb_chan_type) USB_CHAN_IN;
 
                     usb_mixers->audChannelMap.map[usb_mixers->audChannelMap.numInputs].ctype = (enum usb_chan_type) USB_CHAN_IN;
@@ -353,18 +359,22 @@ int addStrings(const unsigned char *data, int length, int mixer_index, int id, i
 
 
                     usb_mixers->usbChannelMap.numOutputs = usb_mixers->usbChannelMap.numOutputs +1;
-                } 
+                }
                 /* Get relevant string descriptor */
-                libusb_get_string_descriptor_ascii(devh, iChannelNames+i, mixer_input_name, 
-                    USB_MIXER_MAX_NAME_LEN - strlen(usb_mixers->usb_mixSel[mixer_index].inputStrings[chanCount]));
+                //libusb_get_string_descriptor_ascii(devh, iChannelNames+i, mixer_input_name, USB_MIXER_MAX_NAME_LEN - strlen(usb_mixers->usb_mixSel[mixer_index].inputStrings[chanCount]));
+                st = TUSBAUDIO_GetUsbStringDescriptorString(h, iChannelNames+i, 0, mixer_input_name,  USB_MIXER_MAX_NAME_LEN - strlen(usb_mixers->usb_mixSel[mixer_index].inputStrings[chanCount]));
+                if ( TSTATUS_SUCCESS != st ) {
+                  return USB_MIXER_FAILURE;
+                }
+                wcstombs(mixer_input_name_copy, mixer_input_name, USB_MIXER_MAX_NAME_LEN);
 
-                strcat(usb_mixers->usb_mixSel[mixer_index].inputStrings[chanCount], (char *)mixer_input_name);
+                strcat(usb_mixers->usb_mixSel[mixer_index].inputStrings[chanCount], (char *)mixer_input_name_copy);
 
                 /* Add to channel mappers also */
-                //strcat(usb_mixers->channel_maps[usb_mixers->num_channel_maps].name, (char *)mixer_input_name);
-                strcat(usb_mixers->audChannelMap.map[usb_mixers->audChannelMap.numInputs ].name, (char *)mixer_input_name);
-                strcat(usb_mixers->usbChannelMap.map[usb_mixers->audChannelMap.numInputs].name, (char *)mixer_input_name);
-                
+                //strcat(usb_mixers->channel_maps[usb_mixers->num_channel_maps].name, (char *)mixer_input_name_copy);
+                strcat(usb_mixers->audChannelMap.map[usb_mixers->audChannelMap.numInputs ].name, (char *)mixer_input_name_copy);
+                strcat(usb_mixers->usbChannelMap.map[usb_mixers->audChannelMap.numInputs].name, (char *)mixer_input_name_copy);
+
                 usb_mixers->audChannelMap.numInputs = usb_mixers->audChannelMap.numInputs +1;
                 usb_mixers->usbChannelMap.numInputs = usb_mixers->usbChannelMap.numInputs +1;
 
@@ -382,7 +392,7 @@ int addStrings(const unsigned char *data, int length, int mixer_index, int id, i
             printf("\n\n");
 #endif
         }
-        else 
+        else
         {
             /* Unit not a input terminal, keep going... */
             if(*(currentUnitPtr+OFFSET_BDESCRIPTORSUBTYPE) == FEATURE_UNIT)
@@ -399,17 +409,17 @@ int addStrings(const unsigned char *data, int length, int mixer_index, int id, i
             }
             else
             {
-                fprintf(stderr,"ERROR: Currently don't support this unit: %d\n", 
+                fprintf(stderr,"ERROR: Currently don't support this unit: %d\n",
                     *(currentUnitPtr+OFFSET_BDESCRIPTORSUBTYPE));
-                exit(1); 
+                exit(1);
             }
-        } 
+        }
     }
     else
     {
         fprintf(stderr,"ERROR: Couldn't find unit %d in descs\n", id );
         exit(1);
-    }
+     }
 
     return chanCount;
 }
@@ -422,7 +432,7 @@ static unsigned char get_mixsel_value(unsigned int mixer, unsigned int channel)
     return data[0];
 }
 
-static int get_mixer_info(const unsigned char *data, int length, unsigned int mixer_index,  libusb_config_descriptor *config_desc) 
+static int get_mixer_info(const unsigned char *data, int length, unsigned int mixer_index)
 {
     const unsigned char *interface_data = data;
     int interface_len = length;
@@ -430,32 +440,32 @@ static int get_mixer_info(const unsigned char *data, int length, unsigned int mi
     //const unsigned char *current_input_term_unit_ptr = NULL;
     //int current_input_term_unit_index = 0;
     //const unsigned char *current_feature_unit_ptr = NULL;
-    int devChanInputCount = 0; 
+    int devChanInputCount = 0;
 
-    while (interface_len) 
+    while (interface_len)
     {
         const unsigned char *interfaces = interface_data;
         int interface_type = *(interfaces + 1);          /* bDescriptorType */
         int unit_type = *(interfaces + 2);               /* bDescriptorSubType */
 
         /* Look for a mixer unit */
-        if (interface_type == USB_CS_INTERFACE && unit_type == USB_MIXER_UNIT_TYPE) 
+        if (interface_type == USB_CS_INTERFACE && unit_type == USB_MIXER_UNIT_TYPE)
         {
             int unit_id = *(interfaces + 3);    /* bUnitId */
             int bNrInPins = *(interfaces + 4);
             int num_in = *(interfaces + 4);     /* bNrInPins - NOTE This is pins NOT channels!! */
-                                                /* Total number of inputs is the sum of the channel counts in the input 
+                                                /* Total number of inputs is the sum of the channel counts in the input
                                                  * clusters.  We need to inspect the sources to gain channel counts */
             int chansIn = 0;
-#ifdef DEBUG 
+#ifdef DEBUG
             printf("Found Mixer Unit %d with %d inputs\n", unit_id, bNrInPins);
             printf("Inspecting mixer inputs... \n\n");
-#endif 
+#endif
             /* For each input pin need to find out inspect its output cluster */
             for (int i = 1; i <= bNrInPins; i++)
             {
                 int sourceId = *(interfaces+4+i);
-#ifdef DEBUG 
+#ifdef DEBUG
                 printf("baSourceID(%d): %d\n", i, sourceId);
 #endif
 
@@ -473,21 +483,21 @@ static int get_mixer_info(const unsigned char *data, int length, unsigned int mi
                     bDescriptorSubType = *(descsData + 2);
                     bDescriptorType = *(descsData + 1);
 
-                    if(bDescriptorType == USB_CS_INTERFACE) 
+                    if(bDescriptorType == USB_CS_INTERFACE)
                     {
-                        if(bDescriptorSubType == USB_FEATURE_UNIT_TYPE || 
+                        if(bDescriptorSubType == USB_FEATURE_UNIT_TYPE ||
                             bDescriptorSubType == USB_INPUT_TERM_TYPE ||
                             bDescriptorSubType == EXTENSION_UNIT )
                         {
                             bUnitId = *(descsData+3);
-                            if(bUnitId == sourceId) 
+                            if(bUnitId == sourceId)
                             {
                                 found = 1;
                                 break;
                             }
                         }
                     }
-                    
+
                     descsData+=currentLength;
                     descsLength -= currentLength;
                 }
@@ -501,23 +511,23 @@ static int get_mixer_info(const unsigned char *data, int length, unsigned int mi
 #ifdef DEBUG
                     printf("Found unit %d, type %d\n", bUnitId, bDescriptorSubType);
 #endif
-                    /* We are looking for bNrChannels in the descs, this is in a different location in desc depending 
+                    /* We are looking for bNrChannels in the descs, this is in a different location in desc depending
                      * on unit type */
                     switch(bDescriptorSubType)
                     {
                         case USB_INPUT_TERM_TYPE:
                             bNrChannelsOffset = 8;
                             bNrChannels = *(descsData+bNrChannelsOffset);
-                            break; 
+                            break;
                         case EXTENSION_UNIT:
                             bNrChannelsOffset = 7 + *(descsData+6);
                             bNrChannels = *(descsData+bNrChannelsOffset);
 
-                            break; 
+                            break;
                         default:
                             printf("ERR\n");
                             exit(1);
-                            break;               
+                            break;
                     }
 #ifdef DEBUG
                     printf("Output chan count: %d\n\n", bNrChannels);
@@ -526,15 +536,15 @@ static int get_mixer_info(const unsigned char *data, int length, unsigned int mi
 
                 }
                 else
-                {          
+                {
                     fprintf(stderr,"ERROR: Mixer input connected to something we dont understand...\n");
                     exit(1);
                 }
             }
-            
+
             /* get number of output channels straight from mixer unit descriptor: bNrChannels */
-            int num_out = *(interfaces + 5 + num_in); 
-#ifdef DEBUG 
+            int num_out = *(interfaces + 5 + num_in);
+#ifdef DEBUG
             printf("Mixer Unit parse complete: bUnitId: %d, Total Input Chans: %d, Output Chans: %d\n\n", unit_id, chansIn, num_out);
 #endif
             usb_mixers->usb_mixer[mixer_index].id = unit_id;
@@ -546,39 +556,45 @@ static int get_mixer_info(const unsigned char *data, int length, unsigned int mi
             const unsigned char *in_unit_start_ptr = interfaces + 5;
             // const unsigned char *currentUnitPtr = NULL;
             // int current_input_term_unit_id = 0;
-           
-            /* We expect this to be a single input from an XU, but we'll keep it slightly generic here */ 
-            for (int num = 0; num < usb_mixers->usb_mixer[mixer_index].num_inPins; num++) 
+
+            /* We expect this to be a single input from an XU, but we'll keep it slightly generic here */
+            for (int num = 0; num < usb_mixers->usb_mixer[mixer_index].num_inPins; num++)
             {
                 /* Save source ID */
                 usb_mixers->usb_mixer[mixer_index].input_connections[num] = *(in_unit_start_ptr+num);
 #ifdef DEBUG
                 printf("Inspecting for Input Terms from mixer unit input pin %d (id: %d)\n",
-                        num,usb_mixers->usb_mixer[mixer_index].input_connections[num]); 
+                        num,usb_mixers->usb_mixer[mixer_index].input_connections[num]);
 #endif
 
-                devChanInputCount = addStrings(data, length, mixer_index, 
-                        usb_mixers->usb_mixer[mixer_index].input_connections[num], devChanInputCount); 
-               
+                devChanInputCount = addStrings(data, length, mixer_index,
+                        usb_mixers->usb_mixer[mixer_index].input_connections[num], devChanInputCount);
+
             }
-           
-            /* The the first input pin at the mix select for the moment. 
-             * probably should be checking if its an XU here */ 
+
+            /* The the first input pin at the mix select for the moment.
+             * probably should be checking if its an XU here */
             usb_mixers->usb_mixSel[mixer_index].id = usb_mixers->usb_mixer[mixer_index].input_connections[0];
             usb_mixers->usb_mixSel[mixer_index].numInputs = devChanInputCount;
             usb_mixers->usb_mixSel[mixer_index].numOutputs = chansIn;
 
             /* Set up mixer output names */
-            unsigned char mixer_output_name[USB_MIXER_MAX_NAME_LEN];
-            unsigned int iChannelNames =  *(interfaces + 10 + bNrInPins); 
-                    
+            WCHAR mixer_output_name[USB_MIXER_MAX_NAME_LEN];
+            char mixer_output_name_copy[USB_MIXER_MAX_NAME_LEN];
+            unsigned int iChannelNames =  *(interfaces + 10 + bNrInPins);
+
             for (int i = 0; i < usb_mixers->usb_mixer[mixer_index].num_outputs; i++)
             {
                 /* Get relevant string descriptor */
                 strcpy(usb_mixers->usb_mixer[mixer_index].output_names[i], "MIX - ");
-                libusb_get_string_descriptor_ascii(devh, iChannelNames+i, mixer_output_name, 
-                  USB_MIXER_MAX_NAME_LEN - strlen(usb_mixers->usb_mixSel[mixer_index].inputStrings[i]));
-                strcat(usb_mixers->usb_mixer[mixer_index].output_names[i], (char *)mixer_output_name);
+                //   libusb_get_string_descriptor_ascii(devh, iChannelNames+i, mixer_output_name, USB_MIXER_MAX_NAME_LEN - strlen(usb_mixers->usb_mixSel[mixer_index].inputStrings[i]));
+                TUsbAudioStatus st = TUSBAUDIO_GetUsbStringDescriptorString(h, iChannelNames+i, 0, mixer_output_name,  USB_MIXER_MAX_NAME_LEN - strlen(usb_mixers->usb_mixSel[mixer_index].inputStrings[i]));
+                if ( TSTATUS_SUCCESS != st ) {
+                  return USB_MIXER_FAILURE;
+                }
+                wcstombs(mixer_output_name_copy, mixer_output_name, USB_MIXER_MAX_NAME_LEN);
+                //   strcat(usb_mixers->usb_mixer[mixer_index].output_names[i], (char *)mixer_output_name);
+                strcat(usb_mixers->usb_mixer[mixer_index].output_names[i], mixer_output_name_copy);
             }
         }
 
@@ -589,81 +605,40 @@ static int get_mixer_info(const unsigned char *data, int length, unsigned int mi
     return num_mixer_units_found;
 }
 
-static int find_xmos_device(unsigned int id, int filed)
-{
-    libusb_device *dev;
-    libusb_device **devs;
-    int i = 0;
-    int found = 0;
+static int find_xmos_device(unsigned int id) {
+  //libusb_device *dev;
+  //libusb_device **devs;
+  int i = 0;
+  int found = 0;
+  TUsbAudioStatus st;
 
-    libusb_get_device_list(NULL, &devs);
+  unsigned int devcnt = TUSBAUDIO_GetDeviceCount();
+  if ( 0 == devcnt ) {
+    return USB_MIXER_FAILURE;
+  }
 
-    while ((dev = devs[i++]) != NULL) 
-    {
-        struct libusb_device_descriptor desc;
-        //returns 0 and retains file descriptor
-        libusb_get_device_descriptor(dev, &desc);
+  st = TUSBAUDIO_OpenDeviceByIndex(0,&h);
+  if ( TSTATUS_SUCCESS != st ) {
+     h = 0;
+     // skip
+  } else {
+    unsigned int numBytes = 0;
+    unsigned char descBuffer[64*1024];
 
-        //printf("VID = 0x%x, PID = 0x%x\n", desc.idVendor, desc.idProduct);
-        if (desc.idVendor == XMOS_VID &&
-            ((desc.idProduct == XMOS_L1_AUDIO1_PID) ||
-            (desc.idProduct == XMOS_L1_AUDIO2_PID) ||
-            (desc.idProduct == XMOS_L2_AUDIO2_PID))) 
-        {
-            if (found == id) 
-            {
-                if (libusb_open(dev, &devh, filed) < 0)
-                {
-                    return -1;
-                } 
-                else 
-                {
-                    libusb_config_descriptor *config_desc = NULL;
-                    //returns 0 and retains config descriptor. iConfig = 0, bNumInterfaces = 6
-                    libusb_get_active_config_descriptor(dev, &config_desc);
-
-                    //TEST CODE
-
-                    //END TEST CODE
-                    if (config_desc != NULL) 
-                    {
-                        //unsigned int num_mixers_found = 0;
-            
-                        usb_mixers->device_open = 1;
-                        usb_mixers->num_usb_mixers = 0;
-
-                        for (int j = 0; j < config_desc->bNumInterfaces; j++) 
-                        {
-                            libusb_claim_interface(devh,j);
-                            const libusb_interface_descriptor *inter_desc = 
-                                ((libusb_interface *)&config_desc->interface[j])->altsetting;
-              
-                            usb_mixers->num_usb_mixers += get_num_mixer_units(inter_desc->extra, inter_desc->extra_length);
-                        }
-
-                        for (int j = 0; j < config_desc->bNumInterfaces; j++) 
-                        {
-                            const libusb_interface_descriptor *inter_desc = 
-                                ((libusb_interface *)&config_desc->interface[j])->altsetting;
-                            bensVar2 = libusb_claim_interface(devh,j);
-                            libusb_control_transfer(devh,0,58,1,0,NULL,NULL,0);
-                            get_mixer_info(inter_desc->extra, inter_desc->extra_length, j, config_desc);
-                        }
-                    } 
-                }
-                break;
-            }
-            found++;
-        }
+    st = TUSBAUDIO_GetUsbConfigDescriptor(h, descBuffer, 64*1024, &numBytes);
+    if ( TSTATUS_SUCCESS != st ) {
+      return USB_MIXER_FAILURE;
     }
 
-    libusb_free_device_list(devs, 1);
+    usb_mixers->num_usb_mixers = get_num_mixer_units(descBuffer, numBytes);
+
+    get_mixer_info(descBuffer, numBytes, 0);
 
     /* Init channel maps from device */
     for(int i = 0; i < usb_mixers->audChannelMap.numOutputs; i++)
     {
        usb_mixers->audChannelMap.map[i].cur = dev_get_channel_map(i, ID_XU_OUT);
-    
+
     }
 
     for(int i = 0; i < usb_mixers->usbChannelMap.numOutputs; i++)
@@ -671,12 +646,12 @@ static int find_xmos_device(unsigned int id, int filed)
        usb_mixers->usbChannelMap.map[i].cur = dev_get_channel_map(i, ID_XU_IN);
        //printf("%d\n", usb_mixers->usbChannelMap.map[i].cur);
     }
-       
+
     /* Now add the mix outputs */
     for(int i = 0; i < usb_mixers->num_usb_mixers; i++)
     {
         for(int j = 0; j < usb_mixers->usb_mixer[i].num_outputs;j++)
-        {   
+        {
             //strcpy(usb_mixers->channel_maps[usb_mixers->num_channel_maps].name, usb_mixers->usb_mixer[i].output_names[j]);
             //usb_mixers->channel_maps[usb_mixers->num_channel_maps].ctype = (enum usb_chan_type) USB_CHAN_MIXER;
             //usb_mixers->num_channel_maps = usb_mixers->num_channel_maps+1;
@@ -690,10 +665,9 @@ static int find_xmos_device(unsigned int id, int filed)
             usb_mixers->usbChannelMap.numInputs = usb_mixers->usbChannelMap.numInputs +1;
         }
     }
-    //devh is not null
-    if(devh)
-    {
 
+    if(h)
+    {
         /* Populate mixer input strings */
         for(int i = 0; i < usb_mixers->num_usb_mixers; i++)
         {
@@ -712,44 +686,38 @@ static int find_xmos_device(unsigned int id, int filed)
             }
         }
     }
+  }
 
-    uint8_t type = 4;
-    int g = 0;
-
-
-
-    return devh ? 0 : -1;
+  return h ? 0 : -1;
 }
 
 // End of libusb interface functions
 
-int usb_mixer_connect(int fileDes)
-{
-    int result = 0;
+int usb_mixer_connect() {
+  int result = 0;
 
-    // Allocate internal storage
-    usb_mixers = (usb_mixer_handle *)malloc(sizeof(usb_mixer_handle));
+  // Allocate internal storage
+  usb_mixers = (usb_mixer_handle *)malloc(sizeof(usb_mixer_handle));
     memset(usb_mixers, 0, sizeof(usb_mixer_handle));
 
-    result = libusb_init(NULL);
-    if (result < 0) 
-    {
-        return USB_MIXER_FAILURE;
-    }
+  // enumerate devices
+  TUsbAudioStatus st = TUSBAUDIO_EnumerateDevices();
+  if ( TSTATUS_SUCCESS != st ) {
+    return USB_MIXER_FAILURE;
+  }
 
-    result = find_xmos_device(0,fileDes);
-    if (result < 0) 
-    {
-        return USB_MIXER_FAILURE;
-    }
-    return result;
-    return USB_MIXER_SUCCESS;
+  result = find_xmos_device(0);
+  if (result < 0) {
+    return USB_MIXER_FAILURE;
+  }
+
+  return USB_MIXER_SUCCESS;
 }
 
 int usb_mixer_disconnect() {
-  libusb_close(devh);
-
-  libusb_exit(NULL);
+  if ( 0 != h ) {
+    TUSBAUDIO_CloseDevice(h);
+  }
 
   free(usb_mixers);
 
@@ -757,14 +725,14 @@ int usb_mixer_disconnect() {
 }
 
 /* Getter for num_usb_mixers */
-int usb_mixer_get_num_mixers() 
+int usb_mixer_get_num_mixers()
 {
   return usb_mixers->num_usb_mixers;
 }
 
 int usb_mixer_get_num_outputs(unsigned int mixer)
 {
-  return usb_mixers->usb_mixer[mixer].num_outputs;
+ return usb_mixers->usb_mixer[mixer].num_outputs;
 }
 
 int usb_mixer_get_num_inputs(unsigned int mixer)
@@ -779,7 +747,7 @@ int usb_mixer_get_layout(unsigned int mixer, unsigned int *inputs, unsigned int 
 }
 
 /* MixSel getters and setters */
-char *usb_mixsel_get_input_string(unsigned int mixer, unsigned int input) 
+char *usb_mixsel_get_input_string(unsigned int mixer, unsigned int input)
 {
   return usb_mixers->usb_mixSel[mixer].inputStrings[input];
 }
@@ -815,32 +783,32 @@ void usb_mixsel_set_state(unsigned int mixer, unsigned int dst, unsigned int src
     // update object state
     usb_mixers->usb_mixSel[mixer].state[dst] = src;
 
-    // update local object strings 
+    // update local object strings
     // TODO we don't really need to store strings since we can look them up...*/
     strcpy(usb_mixers->usb_mixer[mixer].input_names[dst], usb_mixers->usb_mixSel[mixer].inputStrings[src]);
 }
 
-double usb_mixer_get_value(unsigned int mixer, unsigned int nodeId) 
+double usb_mixer_get_value(unsigned int mixer, unsigned int nodeId)
 {
     return (double)usb_mixers->usb_mixer[mixer].nodes[nodeId].weight;
 }
 
-double usb_mixer_get_res(unsigned int mixer, unsigned int nodeId) 
+double usb_mixer_get_res(unsigned int mixer, unsigned int nodeId)
 {
     return (double)usb_mixers->usb_mixer[mixer].nodes[nodeId].res;
 }
 
-double usb_mixer_get_min(unsigned int mixer, unsigned int nodeId) 
+double usb_mixer_get_min(unsigned int mixer, unsigned int nodeId)
 {
     return (double)usb_mixers->usb_mixer[mixer].nodes[nodeId].min;
 }
 
-double usb_mixer_get_max(unsigned int mixer, unsigned int nodeId) 
+double usb_mixer_get_max(unsigned int mixer, unsigned int nodeId)
 {
     return (double)usb_mixers->usb_mixer[mixer].nodes[nodeId].max;
 }
 
-int usb_mixer_set_value(unsigned int mixer, unsigned int nodeId, double val) 
+int usb_mixer_set_value(unsigned int mixer, unsigned int nodeId, double val)
 {
     /* check if update required */
     if(usb_mixers->usb_mixer[mixer].nodes[nodeId].weight != val)
@@ -850,55 +818,55 @@ int usb_mixer_set_value(unsigned int mixer, unsigned int nodeId, double val)
 
         /* write to device */
         short value = (short) (val * 256);
-        
+
         usb_audio_class_set(CUR, 1, 1<<8 | nodeId & 0xff, usb_mixers->usb_mixer[mixer].id,  2, (unsigned char *)&value);
-        
+
     }
     return 0;
 }
 
-int usb_mixer_get_range(unsigned int mixer, unsigned int mixer_unit, int *min, int *max, int *res) 
+int usb_mixer_get_range(unsigned int mixer, unsigned int mixer_unit, int *min, int *max, int *res)
 {
-    // range 0x02
-    return 0;
+  // range 0x02
+  return 0;
 }
 
 int usb_get_usb_channel_map(int channel)
 {
-    return usb_mixers->usbChannelMap.map[channel].cur;
+   return usb_mixers->usbChannelMap.map[channel].cur;
 }
 
 int usb_get_aud_channel_map(int channel)
 {
-    return usb_mixers->audChannelMap.map[channel].cur;
+   return usb_mixers->audChannelMap.map[channel].cur;
 }
 
 int usb_set_aud_channel_map(int channel, int val)
 {
-    /* Check if update required */
-    if(usb_mixers->audChannelMap.map[channel].cur != val)
-    {
-        /* Update local object */
-        usb_mixers->audChannelMap.map[channel].cur = val;
-    
-        /* Write setting to dev */    
-        dev_set_channel_map(channel, val, ID_XU_OUT);
-    }
-    return 0;
+   /* Check if update required */
+   if(usb_mixers->audChannelMap.map[channel].cur != val)
+   {
+      /* Update local object */
+      usb_mixers->audChannelMap.map[channel].cur = val;
+
+      /* Write setting to dev */
+      dev_set_channel_map(channel, val, ID_XU_OUT);
+   }
+   return 0;
 }
 
 int usb_set_usb_channel_map(int channel, int val)
 {
-    /* Check if update required */
-    if(usb_mixers->usbChannelMap.map[channel].cur != val)
-    {
-        /* Update local object */
-        usb_mixers->usbChannelMap.map[channel].cur = val;
-    
-        /* Write setting to dev */    
-        dev_set_channel_map(channel, val, ID_XU_IN);
-    }
-    return 0;
+   /* Check if update required */
+   if(usb_mixers->usbChannelMap.map[channel].cur != val)
+   {
+      /* Update local object */
+      usb_mixers->usbChannelMap.map[channel].cur = val;
+
+      /* Write setting to dev */
+      dev_set_channel_map(channel, val, ID_XU_IN);
+   }
+   return 0;
 }
 
 enum usb_chan_type usb_get_aud_channel_map_type(int channel)
@@ -906,19 +874,19 @@ enum usb_chan_type usb_get_aud_channel_map_type(int channel)
   return usb_mixers->audChannelMap.map[channel].ctype;
 }
 
-enum usb_chan_type usb_get_usb_channel_map_type(int channel) 
+enum usb_chan_type usb_get_usb_channel_map_type(int channel)
 {
   return usb_mixers->usbChannelMap.map[channel].ctype;
 }
 
-char *usb_get_aud_channel_map_name(int channel) 
+char *usb_get_aud_channel_map_name(int channel)
 {
-    return usb_mixers->audChannelMap.map[channel].name;
+  return usb_mixers->audChannelMap.map[channel].name;
 }
 
-char *usb_get_usb_channel_map_name(int channel) 
+char *usb_get_usb_channel_map_name(int channel)
 {
-    return usb_mixers->usbChannelMap.map[channel].name;
+  return usb_mixers->usbChannelMap.map[channel].name;
 }
 
 int usb_get_aud_channel_map_num_outputs()
@@ -938,11 +906,4 @@ int usb_get_usb_channel_map_num_inputs()
 {
     return usb_mixers->usbChannelMap.numInputs;
 }
-
-
-int stringReturn()
-{
-    return bensVar2;
-}
-
 

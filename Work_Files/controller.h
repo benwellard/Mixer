@@ -3,7 +3,6 @@
 
 #include <QObject>
 #include <QMutex>
-#include <QAndroidJniObject>
 
 class Controller : public QObject
 {
@@ -21,7 +20,6 @@ public:
     int initController();
     void deinitController();
     int getChannelToMix(int channel);
-    QAndroidJniObject activity;
     unsigned short* levelData;
     bool isChannelFree(int channel);
 

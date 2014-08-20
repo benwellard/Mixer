@@ -49,6 +49,7 @@ private:
     QList<ChannelBox *> selectors;
     QList<QPushButton *> mutes;
     QList<OutputBox *> outputs;
+    QList<QGroupBox *> sliderBoxes;
     QDialog *outputFrame;
     QPalette p;
     int selectedChannel;

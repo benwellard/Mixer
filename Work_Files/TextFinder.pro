@@ -4,8 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui\
-            androidextras
+QT       += core gui
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -40,7 +39,18 @@ HEADERS  += \
     libusb.h \
     qfingerscrollarea.h \
     channelbox.h \
-    outputbox.h
+    outputbox.h \
+    global.h \
+    verdef.h \
+    dsp_types.h \
+    DspPluginProperties.h \
+    tstatus_codes.h \
+    tstatus_codes_ex.h \
+    tusbaudio_defs.h \
+    tusbaudioapi.h \
+    tusbaudioapi_defs.h \
+    verdef.h \
+    tbase_platform.h
 
 FORMS    += \
     mixer_main.ui
@@ -52,22 +62,9 @@ OTHER_FILES +=
 
 
 
-ANDROID_PACKAGE_SOURCE_DIR += $$PWD/
-
-ANDROID_PACKAGE_SOURCE_DIR/src = $$PWD/src
+LIBS += -L$$PWD/ -ltusbaudioapi
 
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/
 
 
-
-
-#macx:LIBS += -L$$PWD/ -lusb-1.0.0
-
-#INCLUDEPATH += $$PWD/
-#DEPENDPATH += $$PWD/
-
-LIBS += -L$$PWD/ -lusb1.0
-
-INCLUDEPATH += $$PWD/
-DEPENDPATH += $$PWD/

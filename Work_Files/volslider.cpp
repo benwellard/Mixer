@@ -5,7 +5,7 @@
 VolSlider::VolSlider(int indexNo, int channelSelected, QWidget *parent) :
     QSlider()
 {
-    this->setStyleSheet("QSlider::handle { image: url(:/new/prefix1/sliderimage.jpg); border-radius:2px;}");
+    this->setStyleSheet("QSlider::handle {image: url(:/new/prefix1/sliderimage.jpg);border-radius:2px; border: solid black; } ");
     index = indexNo;
     //channels are assigned incorrectly
     //TODO assign channels correctly

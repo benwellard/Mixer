@@ -10,8 +10,8 @@ class MyProxyStyle : public QProxyStyle
     int pixelMetric ( PixelMetric metric, const QStyleOption * option = 0, const QWidget * widget = 0 ) const
     {
         switch(metric) {
-          case PM_SliderLength            : return 100;
-          case PM_SliderThickness         : return 200;
+          case PM_SliderLength            : return 50;
+          case PM_SliderThickness         : return 50;
           default                         : return (QProxyStyle::pixelMetric(metric,option,widget));
         }
     }
@@ -22,9 +22,6 @@ class MyProxyStyle : public QProxyStyle
 int main(int argc, char *argv[])
 {
     QApplication a(argc, argv);
-
-    //TODO Add outputSelector box, get it working
-    //Add custom artwork for as much as possible
 
 
 

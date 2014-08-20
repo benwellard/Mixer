@@ -67,8 +67,8 @@ void Mixer::newSlider()
     sliders[indexNo]->setInitValue(interface->getValue(sliders[indexNo]->channel));
 
     //Sets slider size
-    sliders[indexNo]->setMinimumSize(300,600);
-    sliders[indexNo]->setMaximumSize(300,600);
+    sliders[indexNo]->setMinimumSize(100,400);
+    sliders[indexNo]->setMaximumSize(100,400);
 
     //Connects the change in the slider' value with a function to release that value along with current index
     connect(sliders[indexNo],SIGNAL(valueChanged(int)),sliders[indexNo],SLOT(releaseIndex(int)));
@@ -77,9 +77,22 @@ void Mixer::newSlider()
     connect(sliders[indexNo],SIGNAL(emitIndex(int, int)),this,SLOT(changeVolume(int,int)));
 
     //Slider layout adjustment
-    sliderLayout->setSpacing(5);
-    sliderLayout->addWidget(sliders[indexNo],Qt::AlignLeft);
-    sliderLayout->setAlignment(Qt::AlignLeft);
+    sliderLayout->setSpacing(50);
+    QGroupBox *sliderBox = new QGroupBox();
+    sliderBox->setFixedWidth(170);
+    QHBoxLayout *sliderBoxLayout = new QHBoxLayout();
+    sliderBox->setLayout(sliderBoxLayout);
+    sliderBoxLayout->setAlignment(this,Qt::AlignRight);
+    sliderBoxLayout->addStretch(50000);
+    sliderBoxes.insert(indexNo,sliderBox);
+
+
+    sliderBoxLayout->addWidget(sliders[indexNo]);
+
+
+    sliderLayout->addWidget(sliderBox,Qt::AlignLeft);
+    sliderLayout->addStretch(5);
+
 
 
     //Create the channel selector box
@@ -90,7 +103,7 @@ void Mixer::newSlider()
     selectors.insert(indexNo, channelBox);
 
     //Set the selector's size
-    channelBox->setFixedSize(300,100);
+    channelBox->setFixedSize(60,50);
 
     //Loop that fills the selector box with channels taken from the device
     for(int i = 0;i < 18;i++)
@@ -100,7 +113,7 @@ void Mixer::newSlider()
 
         //Trim the string to remove DAW/AUD
         myString.remove(1,2);
-        myString.remove(7,5);
+        myString.remove(5,myString.length()-6);
 
         //Add string to box
         channelBox->addItem(myString,Qt::DisplayRole);
@@ -133,7 +146,7 @@ void Mixer::newSlider()
     QPushButton *muteButton = new QPushButton();
     muteButton->setStyleSheet("QPushButton { image: url(:/new/prefix1/muteimage.jpg); border: 5px solid black; border-radius:5px;}");
     mutes.insert(indexNo,muteButton);
-    muteButton->setFixedSize(150,180);
+    muteButton->setFixedSize(50,50);
 
 
     //Connects the mute button with the relevant slider
@@ -149,7 +162,9 @@ void Mixer::newSlider()
     muteChannelLayout->setSpacing(0);
     muteChannelLayout->addWidget(muteButton,0,Qt::AlignTop);
     muteChannelLayout->addWidget(channelBox,0,Qt::AlignBottom);
-    sliderLayout->addLayout(muteChannelLayout);
+
+    sliderBoxLayout->addLayout(muteChannelLayout, Qt::AlignRight);
+    sliderBoxLayout->addStretch(5000);
 }
 
 void Mixer::muteChannelController(int channel)
@@ -177,13 +192,14 @@ void Mixer::constructOutputs() {
     for(int i = 0;i < numOuts; i++)
     {
         OutputBox *outputBox = new OutputBox(i);
-        outputBox->setFixedSize(400,100);
-        outputBox->setStyleSheet("QCheckBox::indicator { width: 100px; height: 100px; }");
+        outputBox->setFixedSize(200,200);
+        outputBox->setStyleSheet("QCheckBox::indicator { width: 200px; height: 200px; }");
         connect(outputBox,SIGNAL(clicked()), outputBox,SLOT(setOut()));
         connect(outputBox,SIGNAL(emitIndex(int)),this,SLOT(deMapChannel(int)));
         QString text = "output: ";
         QString text2 = QString::number(controllerp->getMap(i));
         outputBox->setText(text.append(text2));
+        outputBox->setVisible(false);
         outputs.insert(i,outputBox);
         outputLayout->addWidget(outputBox);
     }
@@ -206,7 +222,8 @@ void Mixer::constructOutputs() {
 void Mixer::deMapChannel(int index)
 {
     if(outputs[index]->isChecked() == false)
-         controllerp->mapChannelToMix(index*2, 0);
+         controllerp->mapChannelToMix(index*2, 15);
+         controllerp->mapChannelToMix((index*2) + 1, 16);
 }
 
 void Mixer::populateOutputs()
@@ -254,7 +271,7 @@ void Mixer::constructMixer(int output)
     constructOutputs();
     mainLayout->setSpacing(0);
     QPushButton *outputButton = new QPushButton();
-    outputButton->setFixedSize(300,200);
+    outputButton->setFixedSize(100,50);
     outputButton->setText("Select \nOutputs");
     mainLayout->addWidget(outputButton);
 
@@ -263,17 +280,21 @@ void Mixer::constructMixer(int output)
 
     //Adjust the main layout's spacing and alignment
     mainLayout->setAlignment(Qt::AlignCenter);
-    mainLayout->addSpacing(20);
-
+    mainLayout->addSpacing(180);
+    mainLayout->addStretch(5000);
     //Create the layout for the sliders and add it to the main layout
     sliderLayout = new QHBoxLayout;
     QGroupBox *sliderFrame = new QGroupBox();
-    sliderFrame->setFixedSize(10000,680);
-    mainLayout->addWidget(sliderFrame);
-    sliderFrame->setLayout(sliderLayout);
-    sliderFrame->setStyleSheet("QGroupBox {background-color: white; border: 5px solid black; border-radius: 2px; }");
+    sliderFrame->setFixedSize(3200,500);
+    mainLayout->addStretch(500);
 
-    mainLayout->addStretch(1000);
+    mainLayout->addWidget(sliderFrame,Qt::AlignBottom);
+    mainLayout->setAlignment(sliderFrame,Qt::AlignBottom);
+    QVBoxLayout *slidervolLayout = new QVBoxLayout();
+    sliderFrame->setLayout(slidervolLayout);
+    slidervolLayout->addStretch(50);
+    slidervolLayout->addLayout(sliderLayout);
+    sliderFrame->setStyleSheet("QGroupBox {background-color: white; border: 5px solid black; border-radius: 10px; }");
 
     //Loop that creates 18 input channels
     for(int i = 0;i < 18;i++)

@@ -6,8 +6,7 @@
 #include <QtConcurrent/QtConcurrent>
 #include <QMutex>
 #include<interface.h>
-#include <jni.h>
-#include <QAndroidJniObject>
+
 
 
 static unsigned char levels[64];
@@ -22,10 +21,7 @@ Controller::Controller()
 int Controller::initController()
 {
 
-    activity = QAndroidJniObject::callStaticObjectMethod("org/qtproject/qt5/android/QtNative", "activity", "()Landroid/app/Activity;");
-    int fd = activity.callMethod<jint>("returnFD");
-    int g = usb_mixer_connect(fd);
-
+    int g = usb_mixer_connect();
     return g;
 
 }

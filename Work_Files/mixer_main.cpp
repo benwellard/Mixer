@@ -13,6 +13,7 @@
 #include <usb_mixer.h>
 #include <qfingerscrollarea.h>
 #include <QScrollBar>
+#include <QDesktopWidget>
 
 mixer_main::mixer_main() :QWidget()
 {
@@ -31,7 +32,7 @@ mixer_main::mixer_main() :QWidget()
     this->constructWindow();
 
     //Test Functions
-    error = stringReturn();
+    error = 2;
     error3 = (char*)error2;
     QString errorstring = QString::number(error);
     //QLabel *errorlabel = new QLabel(this);
@@ -54,11 +55,13 @@ void mixer_main::constructWindow()
 {
 
     Controller *contP = &controller;
-    this->setMinimumSize(1920,1000);
+    QDesktopWidget *desktop = new QDesktopWidget();
+    QRect screen = desktop->availableGeometry(this);
+    this->setFixedSize(screen.width(),screen.height()-50);
 
     //Tab Object
     QTabWidget *tabs = new QTabWidget(this);
-    tabs->setMinimumSize(1920,1100);
+    tabs->setMinimumSize(screen.width(), screen.height()-50);
     tabs->setStyleSheet("QTabBar::tab { background: white; border: 2px solid black; } QTabBar::tab:selected { background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,"
                         "stop: 0 #FF0000, stop: 0.2 #FFFFFF); }");
 
@@ -88,10 +91,10 @@ void mixer_main::constructWindow()
     mix2slide->setWidget(mix2);
     mix3slide->setWidget(mix3);
     mix4slide->setWidget(mix4);
-    mix1slide->setFixedSize(1920,1000);
-    mix2slide->setFixedSize(1920,1000);
-    mix3slide->setFixedSize(1920,1000);
-    mix4slide->setFixedSize(1920,1000);
+    mix1slide->setMinimumSize(screen.width()-30, screen.height()-30);
+    mix2slide->setMinimumSize(screen.width()-30, screen.height()-30);
+    mix3slide->setMinimumSize(screen.width()-30, screen.height()-30);
+    mix4slide->setMinimumSize(screen.width()-30, screen.height()-30);
 
     //Show Scroll Areas
     mix1slide->show();
