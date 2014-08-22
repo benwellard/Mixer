@@ -26,8 +26,7 @@ int Controller::initController()
     int g = usb_mixer_connect();
 
 
-    //for(int i = 0;i < 64;i++)
-      //  levels[i] = '0';
+
 
 
     return g;
@@ -42,8 +41,10 @@ void Controller::deinitController()
 unsigned short* Controller::getLevels()
 {
 
-    int y = usb_mixer_mem_get(0,0,levels);
 
+    for(int i = 0;i < 64;i++)
+       levels[i] = '0';
+    int y = usb_mixer_mem_get(0,0,levels);
     unsigned short * levelData = (unsigned short *)levels;
 
     return levelData;

@@ -47,8 +47,6 @@ HEADERS  += \
     tstatus_codes.h \
     tstatus_codes_ex.h \
     tusbaudio_defs.h \
-    tusbaudioapi.h \
-    tusbaudioapi_defs.h \
     verdef.h \
     tbase_platform.h
 
@@ -62,9 +60,10 @@ OTHER_FILES +=
 
 
 
-LIBS += -L$$PWD/ -ltusbaudioapi
+
+
+
+macx: LIBS += -L$$PWD/ -lusb-1.0.0
 
 INCLUDEPATH += $$PWD/
 DEPENDPATH += $$PWD/
-
-
