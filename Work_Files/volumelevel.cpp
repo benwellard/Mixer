@@ -5,63 +5,88 @@
 #include <QPaintEvent>
 #include <decibelworker.h>
 #include <controller.h>
-//#include <QThread>
-#include <VolumeLevelintermixer.h>
+#include <QThread>
+//#include <VolumeLevelintermixer.h>
+#include <QStyleOption>
 
-VolumeLevel::VolumeLevel(QWidget *parent) :
-    QWidget(parent)
+
+VolumeLevel::VolumeLevel(Interface * interfacevl, int channels, QWidget *parent) : QGroupBox(parent)
 {
+    noChannels = channels;
     x = 30;
     h = 200;
     fillArray();
-    //VolumeLevelInterMixer *vlim = new VolumeLevelInterMixer();
-    //connect(vlim,SIGNAL(emitLevels(unsigned short*)),this,SLOT(setInputLevels(unsigned short*)));
-    //QThread *thread = new QThread(this);
-    //vlim->moveToThread(thread);
-    //connect(thread,SIGNAL(started()),vlim, SLOT(getLevels()));
-    //thread->start(QThread::NormalPriority);
+    vlim = new VolumeLevelInterMixer(interfacevl);
+    QTimer *refresh = new QTimer();
+    connect(refresh,SIGNAL(timeout()),this,SLOT(setInputLevels()));
+    refresh->start(1);
 }
 
 
 void VolumeLevel::paintEvent(QPaintEvent *event)
 {
-    QRect rect = event->rect();
-    QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.drawRect(rect);
+
+
+
+    for(int i = 0;i < 32;i++)
+    {
+    //unsigned short larry = hArray[i];
+    int g = 10;
+    g = 50;
+    }
+\
+    p.begin(this);
+    p.setRenderHint(QPainter::Antialiasing);
+    QStyleOption opt;
+    opt.init(this);
+    style()->drawPrimitive(QStyle::PE_Widget, &opt, &p, this);
+    QColor myPenColor = QColor(255,255,255,255);
+    QBrush *brush = new QBrush(myPenColor,Qt::SolidPattern);
+    p.setPen(myPenColor);
+    p.setBrush(*brush);
     x = -40;
+    hArray = vlim->getLevels();
+
+    unsigned short * levs;
+
+    levs = hArray;
+
+    //unsigned short *larry2;
+    //memcpy(newArray,hArray,sizeof(hArray));
+
+
     for(int i = 0;i < noChannels; i++)
     {
         x = - 40 - (i * 100);
-        painter.rotate(180);
-        if(hArray[i] > 22000)
-            hArray[i] = 22000;
-        QRect *vol = new QRect(x - 25 ,-250,30,hArray[i + 6]/100);
-        painter.drawRect(*vol);
-        painter.rotate(180);
+        p.rotate(180);
 
+        unsigned short larry = levs[0+i];
+        if(larry > 22000)
+            larry = 22000;
+        if(larry < 1)
+            larry = 1;
+        QRect *vol = new QRect(x - 25 ,-250,30,(larry)/200);
+        p.drawRect(*vol);
+        p.rotate(180);
     }
-
+    p.end();
 }
 
-void VolumeLevel::setInputLevels(unsigned short * hxArray)
+void VolumeLevel::setInputLevels()
 {
-    hArray = hxArray;
+    //unsigned short * hxArray = vlim->getLevels();
+    //hArray = hxArray;
     update();
 }
 
 void VolumeLevel::fillArray()
 {
-    hArray = new unsigned short[12];
-    for(int i = 0;i <= 11;i++) {
-        hArray[i] = 0;
+
+    for(int i = 0;i < noChannels;i++) {
+        //hArray[i] = 1000;
     }
 }
 
-void VolumeLevel::setChannels(int n)
-{
-    noChannels = n;
-    fillArray();
-}
+
 
 

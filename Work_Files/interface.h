@@ -26,6 +26,7 @@ public slots:
     void setChannel(int index, int channel);
 private:
     void deletePreviousMapping();
+    unsigned short * levelThings;
 };
 
 #endif // INTERFACE_H

@@ -10,6 +10,7 @@ class Controller : public QObject
 public:
     Controller();
 
+
     unsigned short *getLevels();
     void mapChannelToMix(int channel, int mixerChannel);
     void mapMixInput(int input, int mixerChannel, int channel);
@@ -20,7 +21,7 @@ public:
     int initController();
     void deinitController();
     int getChannelToMix(int channel);
-    unsigned short* levelData;
+    unsigned char levels[64];
     bool isChannelFree(int channel);
 
 private:

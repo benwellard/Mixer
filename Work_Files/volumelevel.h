@@ -5,30 +5,33 @@
 #include <QRect>
 #include <QTimer>
 #include <VolumeLevelintermixer.h>
-class VolumeLevel : public QWidget
+#include <QGroupBox>
+#include <QPainter>
+#include <QList>
+
+class VolumeLevel : public QGroupBox
 {
-
     Q_OBJECT
+
 public:
-    explicit VolumeLevel(QWidget *parent = 0);
+    explicit VolumeLevel(Interface *interfacevl, int channels, QWidget *parent = 0);
     void paintEvent(QPaintEvent *event);
-
-
     void fillArray();
     int noChannels;
-
 signals:
 
 private:
     QTimer timer;
     int x,y,h;
-    unsigned short *hArray;
+
+    unsigned short * hArray;
+
     QRect vol;
-    VolumeLevelInterMixer vlim;
+    QPainter p;
+    VolumeLevelInterMixer *vlim;
 
 public slots:
-    void setInputLevels(unsigned short *hxArray);
-    void setChannels(int n);
+    void setInputLevels();
 };
 
 #endif // VOLUMELEVEL_H

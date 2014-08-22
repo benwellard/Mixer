@@ -32,14 +32,14 @@ Mixer::Mixer(int output, int mixerOut, Controller *controller) : QWidget()
 
     //Controller pointer
     controllerp = controller;
-
+    numIns = usb_mixer_get_num_inputs(0);
     //Does nothing
     initVolumesArray();
 
 
     interface->MixerMapClear();
     constructMixer(output);
-    //QWidget *volumes = new QWidget();
+
 
 }
 
@@ -67,8 +67,8 @@ void Mixer::newSlider()
     sliders[indexNo]->setInitValue(interface->getValue(sliders[indexNo]->channel));
 
     //Sets slider size
-    sliders[indexNo]->setMinimumSize(100,400);
-    sliders[indexNo]->setMaximumSize(100,400);
+    sliders[indexNo]->setMinimumSize(100,300);
+    sliders[indexNo]->setMaximumSize(100,300);
 
     //Connects the change in the slider' value with a function to release that value along with current index
     connect(sliders[indexNo],SIGNAL(valueChanged(int)),sliders[indexNo],SLOT(releaseIndex(int)));
@@ -106,7 +106,7 @@ void Mixer::newSlider()
     channelBox->setFixedSize(60,50);
 
     //Loop that fills the selector box with channels taken from the device
-    for(int i = 0;i < 18;i++)
+    for(int i = 0;i < numIns;i++)
     {
         //Creates a string with data pulled from device
         QString myString = usb_mixsel_get_input_string(0,i);
@@ -125,7 +125,7 @@ void Mixer::newSlider()
     //That channel is what this channel is currently assigned to.
     QString *channelName = new QString(usb_mixer_get_input_name(0,indexNo));
     int curInd;
-    for(curInd = 0;curInd < 18;curInd++)
+    for(curInd = 0;curInd < numIns;curInd++)
     {
         QString *channelInput = new QString(usb_mixsel_get_input_string(0,curInd));
         if(channelName->compare(channelInput) == 0)
@@ -193,11 +193,13 @@ void Mixer::constructOutputs() {
     {
         OutputBox *outputBox = new OutputBox(i);
         outputBox->setFixedSize(200,200);
-        outputBox->setStyleSheet("QCheckBox::indicator { width: 200px; height: 200px; }");
+        outputBox->setStyleSheet("QCheckBox::indicator { width: 100px; height: 100px; }");
         connect(outputBox,SIGNAL(clicked()), outputBox,SLOT(setOut()));
         connect(outputBox,SIGNAL(emitIndex(int)),this,SLOT(deMapChannel(int)));
+        controllerp->mapChannelToMix((i*2)+1,35+i);
+        controllerp->mapChannelToMix(i*2,35+i);
         QString text = "output: ";
-        QString text2 = QString::number(controllerp->getMap(i));
+        QString text2 = QString::number(controllerp->getMap(i*2)-34);
         outputBox->setText(text.append(text2));
         outputBox->setVisible(false);
         outputs.insert(i,outputBox);
@@ -210,7 +212,7 @@ void Mixer::constructOutputs() {
 
 
     hideOutputs = new QPushButton("Done");
-
+    hideOutputs->setFixedSize(200,50);
 
     connect(hideOutputs,SIGNAL(pressed()),this,SLOT(dePopulateOutputs()));
     connect(hideOutputs,SIGNAL(pressed()),this,SLOT(setOutputs()));
@@ -222,8 +224,8 @@ void Mixer::constructOutputs() {
 void Mixer::deMapChannel(int index)
 {
     if(outputs[index]->isChecked() == false)
-         controllerp->mapChannelToMix(index*2, 15);
-         controllerp->mapChannelToMix((index*2) + 1, 16);
+         controllerp->mapChannelToMix(index*2, 40);
+         controllerp->mapChannelToMix((index*2) + 1, 41);
 }
 
 void Mixer::populateOutputs()
@@ -232,9 +234,8 @@ void Mixer::populateOutputs()
 
     for(int i = 0;i < numOuts;i++)
     {
-        if((controllerp->getMap(i*2)) < 26 || (outputs[i]->isChecked() == true))
+        if(((controllerp->getMap(i*2)) < 26) || (controllerp->getMap(i*2) > 34) || (outputs[i]->isChecked() == true))
         {
-
             outputs[i]->setVisible(true);
         }
     }
@@ -242,22 +243,22 @@ void Mixer::populateOutputs()
 
 void Mixer::dePopulateOutputs()
 {
-     //QLayoutItem *child;
-     //while ((child = outputLayout->takeAt(0)) != 0) {
-    // }
     for(int i = 0;i < numOuts;i++)
         outputs[i]->setVisible(false);
-
 }
 
 void Mixer::setOutputs()
 {
     for(int i = 0;i < numOuts;i++)
     {
-        if((controllerp->getMap(i*2) < 26) && (outputs[i]->isChecked() == true))
+        if(((controllerp->getMap(i*2) < 26) || (controllerp->getMap(i*2) > 34)) && (outputs[i]->isChecked() == true))
         {
             interface->setOutputChannel(i*2);
         }
+    }
+    for(int i = 0;i < outputs.size();i++)
+    {
+        outputs[i]->setVisible(false);
     }
     outputFrame->hide();
 }
@@ -278,14 +279,20 @@ void Mixer::constructMixer(int output)
     connect(outputButton,SIGNAL(clicked()),this,SLOT(populateOutputs()));
     connect(outputButton,SIGNAL(clicked()),outputFrame,SLOT(show()));
 
+
+    VolumeLevel *volumes = new VolumeLevel(interface, numIns);
+    mainLayout->addWidget(volumes,0,Qt::AlignTop);
+    volumes->setFixedSize(3200,300);
+    volumes->setStyleSheet("background: solid black; border: 10px solid white;");
+
     //Adjust the main layout's spacing and alignment
     mainLayout->setAlignment(Qt::AlignCenter);
-    mainLayout->addSpacing(180);
-    mainLayout->addStretch(5000);
+
+
     //Create the layout for the sliders and add it to the main layout
     sliderLayout = new QHBoxLayout;
     QGroupBox *sliderFrame = new QGroupBox();
-    sliderFrame->setFixedSize(3200,500);
+    sliderFrame->setFixedSize(3200,400);
     mainLayout->addStretch(500);
 
     mainLayout->addWidget(sliderFrame,Qt::AlignBottom);
@@ -297,7 +304,7 @@ void Mixer::constructMixer(int output)
     sliderFrame->setStyleSheet("QGroupBox {background-color: white; border: 5px solid black; border-radius: 10px; }");
 
     //Loop that creates 18 input channels
-    for(int i = 0;i < 18;i++)
+    for(int i = 0;i < numIns;i++)
     {
         indexNo = i;
 

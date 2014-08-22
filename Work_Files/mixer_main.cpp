@@ -23,22 +23,10 @@ mixer_main::mixer_main() :QWidget()
     QPalette pal(palette());
     pal.setColor(QPalette::Background,Qt::white);
     this->setPalette(pal);
-    //Test Variables
-    int error = -5;
-    unsigned char* error2;
-    char* error3;
+
 
     //Program Start
     this->constructWindow();
-
-    //Test Functions
-    error = 2;
-    error3 = (char*)error2;
-    QString errorstring = QString::number(error);
-    //QLabel *errorlabel = new QLabel(this);
-    //errorlabel->setText(errorstring);
-    //errorlabel->setFixedSize(1000,100);
-    //errorlabel->move(500,910);
 
 }
 
@@ -63,7 +51,7 @@ void mixer_main::constructWindow()
     QTabWidget *tabs = new QTabWidget(this);
     tabs->setMinimumSize(screen.width(), screen.height()-50);
     tabs->setStyleSheet("QTabBar::tab { background: white; border: 2px solid black; } QTabBar::tab:selected { background: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0,"
-                        "stop: 0 #FF0000, stop: 0.2 #FFFFFF); }");
+                        "stop: 0 #FF0000, stop: 0.8 #FFFFFF); }");
 
 
     //Widgets used as frames for Scroll Areas

@@ -21,8 +21,9 @@ void Interface::MixerMapClear() {
 
 unsigned short* Interface::getLevels()
 {
-    //returns volume levels as a short array
-    return controlleri->getLevels();
+    levelThings = controlleri->getLevels();
+
+    return levelThings;
 }
 
 void Interface::ChangeVolume(int channel, int volume)

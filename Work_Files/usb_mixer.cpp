@@ -149,7 +149,7 @@ int usb_mixer_mem_get(unsigned int mixer, unsigned offset, unsigned char *data)
                                         MEM,
                                         0, // cs
                                         offset, //was cn
-                                        &data,
+                                        data,
                                         64,
                                         NULL,
                                         1000);

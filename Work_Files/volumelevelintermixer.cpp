@@ -4,18 +4,37 @@
 #include <QTimer>
 #include <controller.h>
 #include <interface.h>
+#include <QtConcurrent/QtConcurrent>
+#include <QtConcurrent/QtConcurrentRun>
+#include <QFuture>
 
-VolumeLevelInterMixer::VolumeLevelInterMixer(QObject *parent) :
+using namespace QtConcurrent;
+
+VolumeLevelInterMixer::VolumeLevelInterMixer(Interface *interface,QObject *parent) :
     QObject(parent)
 {
 
+
+
+    interfacev = interface;
+
+
 }
-void VolumeLevelInterMixer::getLevels()
+unsigned short *  VolumeLevelInterMixer::getLevels()
 {
 
-    //while(true) {
-    unsigned short *levelDataX = interface->getLevels();
-    emit emitLevels(levelDataX);
-    //}
+    values.clear();
+    levelDataX = interfacev->getLevels();
+    unsigned short x2 = levelDataX[1];
+    unsigned short x3 = levelDataX[2];
+
+    for(int i = 0;i < 64;i++)
+    {
+        unsigned short  x = levelDataX[i];
+        values.insert(i, x);
+    }
+    unsigned short x1 = values[1];
+
+    return levelDataX;
 
 }

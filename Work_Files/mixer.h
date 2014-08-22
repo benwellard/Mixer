@@ -55,6 +55,7 @@ private:
     int selectedChannel;
     int indexNo;
     int numOuts;
+    int numIns;
     QHBoxLayout *sliderLayout;
     QVBoxLayout *mainLayout;
     QWidget *channels;

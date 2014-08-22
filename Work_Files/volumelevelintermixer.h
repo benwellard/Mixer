@@ -3,20 +3,24 @@
 
 #include <QObject>
 #include <interface.h>
+#include <QList>
+
 class VolumeLevelInterMixer : public QObject
 {
     Q_OBJECT
 public:
-    explicit VolumeLevelInterMixer(QObject *parent = 0);
-    Interface *interface;
+    explicit VolumeLevelInterMixer(Interface *interface, QObject *parent = 0);
+    Interface *interfacev;
     unsigned short* levelsX;
     //unsigned short* levelDataX;
-
+    unsigned short *getLevels();
+    unsigned short * levelDataX;
+    QList<unsigned short> values;
 signals:
     void emitLevels(unsigned short*);
 
 public slots:
-    void getLevels();
+
 };
 
 #endif // BOARDINTERMIXER_H
